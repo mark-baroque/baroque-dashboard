@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baroque Group — Design OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garant:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1A2B45;--nvm:#243755;--nvl:#2E4468;--nvd:#111D2E;
+  --cream:#F5EFE3;--crm:#EDE5D4;--crd:#E2D6C0;--crc:#FDFAF5;
+  --gold:#C4913A;--gol:#D4A855;--gop:#F0DFB8;
+  --red:#C04040;--rbg:#FDF0F0;--amber:#C47A20;--abg:#FDF5E8;
+  --green:#2A7A5A;--gbg:#EDF7F2;--purple:#7A4FC0;--pbg:#F5EEFF;
+  --blue:#3A68C0;--bbg:#EEF3FF;--teal:#1A8080;--tbg:#E8F5F5;
+  --b:rgba(26,43,69,.1);--bm:rgba(26,43,69,.16);
+  --t1:#1A2B45;--t2:#4A5E7A;--t3:#7A8FA8;--t4:#A8B8C8;
+  --r:8px;--rl:12px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--t1);min-height:100vh}
+
+/* ── LOGIN ── */
+#login-screen{position:fixed;inset:0;background:var(--nvd);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:0}
+.login-brand{text-align:center;margin-bottom:40px}
+.login-brand .wm{font-family:'Cormorant Garant',serif;font-size:28px;font-weight:400;letter-spacing:.22em;text-transform:uppercase;color:var(--cream)}
+.login-brand .sm{font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:var(--gol);margin-top:5px;opacity:.8}
+.login-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:36px 40px;width:360px}
+.login-box h2{font-family:'Cormorant Garant',serif;font-size:20px;font-weight:400;color:var(--cream);margin-bottom:6px}
+.login-box p{font-size:11px;color:rgba(255,255,255,.35);margin-bottom:24px;letter-spacing:.03em}
+.login-box label{font-size:8.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:5px}
+.login-box input{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:11px 14px;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:14px;letter-spacing:.12em;outline:none;transition:.15s;margin-bottom:14px}
+.login-box input:focus{border-color:var(--gold);background:rgba(255,255,255,.08)}
+.login-btn{width:100%;background:var(--gold);color:white;border:none;border-radius:8px;padding:12px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.04em;transition:.15s}
+.login-btn:hover{background:var(--gol)}
+.login-err{color:#FF9090;font-size:11px;text-align:center;margin-top:10px;display:none}
+.login-roles{margin-top:28px;padding-top:20px;border-top:1px solid rgba(255,255,255,.07)}
+.login-roles p{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:10px;text-align:center}
+.login-role-list{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.lr{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:6px 9px;cursor:pointer;transition:.1s}
+.lr:hover{background:rgba(255,255,255,.08)}
+.lr .role{font-size:10px;font-weight:600;color:rgba(255,255,255,.6)}
+.lr .code{font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,.3);margin-top:1px}
+
+/* ── APP ── */
+#app{display:none;height:100vh;overflow:hidden;flex-direction:row}
+#app.show{display:flex}
+
+/* ── SIDEBAR ── */
+.sb{width:210px;background:var(--nvd);height:100vh;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sb::-webkit-scrollbar{width:2px}.sb::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08)}
+.sb-top{padding:18px 14px 13px;border-bottom:1px solid rgba(255,255,255,.05)}
+.sb-wm{font-family:'Cormorant Garant',serif;font-size:13.5px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--cream)}
+.sb-sm{font-size:7.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--gol);margin-top:2px;opacity:.75}
+.sb-user{display:flex;align-items:center;gap:7px;padding:10px 14px 0}
+.sb-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.sb-uname{font-size:11px;font-weight:500;color:rgba(255,255,255,.6)}
+.sb-urole{font-size:8.5px;color:rgba(255,255,255,.3);margin-top:1px}
+.sb-nav{padding:8px 0;flex:1}
+.sb-lbl{font-size:7px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.2);padding:10px 13px 4px}
+.sbi{display:flex;align-items:center;gap:7px;padding:6px 13px;cursor:pointer;transition:.1s;border-left:2px solid transparent}
+.sbi:hover{background:rgba(255,255,255,.04)}
+.sbi.on{background:rgba(196,145,58,.11);border-left-color:var(--gold)}
+.sbi .ic{font-size:11px;width:15px;text-align:center;opacity:.55;flex-shrink:0}
+.sbi.on .ic{opacity:1}
+.sbi .st{font-size:11px;color:rgba(255,255,255,.48)}
+.sbi.on .st{color:var(--cream);font-weight:500}
+.sb-bdg{margin-left:auto;font-size:8px;font-weight:700;padding:1px 5px;border-radius:10px;background:rgba(196,145,58,.22);color:var(--gol);flex-shrink:0}
+.sb-bdg.r{background:rgba(192,64,64,.22);color:#FF9090}
+.sb-foot{padding:11px 13px;border-top:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between}
+.sb-date{font-size:8.5px;color:rgba(255,255,255,.2)}
+.logout-btn{font-size:8.5px;color:rgba(255,255,255,.3);cursor:pointer;padding:3px 6px;border-radius:4px;border:1px solid rgba(255,255,255,.08);transition:.1s}
+.logout-btn:hover{color:rgba(255,255,255,.6);background:rgba(255,255,255,.05)}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{background:var(--crc);border-bottom:1px solid var(--bm);padding:11px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tb-title{font-family:'Cormorant Garant',serif;font-size:18px;font-weight:500;color:var(--navy)}
+.tb-sub{font-size:9.5px;color:var(--t3);margin-top:1px}
+.tb-r{display:flex;align-items:center;gap:7px}
+.btn{font-family:'DM Sans',sans-serif;font-size:10px;font-weight:600;padding:4px 11px;border-radius:6px;border:1px solid var(--b);background:white;color:var(--t2);cursor:pointer;transition:.1s;display:inline-flex;align-items:center;gap:4px}
+.btn:hover{background:var(--crm);border-color:var(--bm)}
+.btn.pri{background:var(--navy);color:white;border-color:var(--navy)}.btn.pri:hover{background:var(--nvm)}
+.btn.gold{background:var(--gold);color:white;border-color:var(--gold)}.btn.gold:hover{background:var(--gol)}
+.btn.dan{background:var(--rbg);color:var(--red);border-color:rgba(192,64,64,.2)}
+.btn.sm{font-size:9px;padding:3px 7px}
+.toast{font-size:9px;color:var(--green);background:var(--gbg);padding:3px 9px;border-radius:4px;border:1px solid rgba(42,122,90,.2);opacity:0;transition:.3s;font-family:'DM Mono',monospace}
+.toast.show{opacity:1}
+.role-pill{font-size:8.5px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.08em;text-transform:uppercase}
+
+/* ── CONTENT ── */
+.ct{flex:1;overflow-y:auto;padding:18px 24px 50px}
+.ct::-webkit-scrollbar{width:4px}.ct::-webkit-scrollbar-thumb{background:var(--crd);border-radius:2px}
+.sec{display:none;animation:fi .16s ease}.sec.on{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── STATS ── */
+.stats{display:grid;gap:8px;margin-bottom:16px}
+.stats.c6{grid-template-columns:repeat(6,1fr)}
+.stats.c4{grid-template-columns:repeat(4,1fr)}
+.stats.c3{grid-template-columns:repeat(3,1fr)}
+.stat{background:var(--crc);border:1px solid var(--b);border-radius:var(--rl);padding:11px 13px}
+.stat .lb{font-size:7.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--t3);margin-bottom:4px}
+.stat .vl{font-family:'Cormorant Garant',serif;font-size:24px;font-weight:400;color:var(--navy);line-height:1}
+.stat .sb2{font-size:9px;color:var(--t3);margin-top:2px}
+.stat.sg{border-left:3px solid var(--green)}.stat.sa{border-left:3px solid var(--amber)}
+.stat.sr{border-left:3px solid var(--red)}.stat.so{border-left:3px solid var(--gold)}
+.stat.sb3{border-left:3px solid var(--blue)}.stat.sp{border-left:3px solid var(--purple)}
+
+/* ── ALERTS ── */
+.alert{border-radius:var(--r);padding:9px 13px;margin-bottom:14px;font-size:11px;line-height:1.5}
+.alert.red{background:rgba(192,64,64,.06);border:1px solid rgba(192,64,64,.16);color:var(--red)}
+.alert.info{background:rgba(26,43,69,.04);border:1px solid var(--b);color:var(--t2)}
+.alert.gold{background:rgba(196,145,58,.08);border:1px solid rgba(196,145,58,.2);color:var(--amber)}
+
+/* ── SECTION HEADER ── */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sh-l{display:flex;align-items:baseline;gap:8px}
+.sh-t{font-family:'Cormorant Garant',serif;font-size:20px;font-weight:500;color:var(--navy)}
+.sh-tag{font-size:7.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;padding:2px 7px;border-radius:20px;background:var(--crm);color:var(--t3);border:1px solid var(--b)}
+.sh-r{display:flex;gap:5px;align-items:center}
+
+/* ── ALEG ── */
+.aleg{display:flex;align-items:center;gap:13px;background:var(--navy);border-radius:var(--rl);padding:9px 15px;margin-bottom:16px;flex-wrap:wrap}
+.aleg-t{font-size:7px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.28)}
+.aleg-i{font-size:10.5px;color:rgba(255,255,255,.65)}
+.aleg-n{margin-left:auto;font-family:'Cormorant Garant',serif;font-size:13px;color:var(--gol);font-style:italic}
+
+/* ── TABLES ── */
+.tw{background:var(--crc);border:1px solid var(--b);border-radius:var(--rl);overflow:hidden;margin-bottom:12px}
+.tf{padding:9px 13px;border-bottom:1px solid var(--b);display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:white}
+.tf label{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+.tf select,.tf input{font-family:'DM Sans',sans-serif;font-size:10.5px;padding:3px 7px;border:1px solid var(--b);border-radius:5px;background:var(--cream);color:var(--t1);outline:none}
+.tf input{width:120px}
+.tov{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:11px}
+thead tr{background:var(--crm)}
+th{font-size:7.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--t3);padding:7px 9px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--b)}
+td{padding:6px 9px;border-bottom:1px solid var(--b);color:var(--t2);vertical-align:middle;line-height:1.4}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(26,43,69,.015)}
+td.str{font-weight:600;color:var(--navy)}
+td.mono{font-family:'DM Mono',monospace;font-size:9.5px}
+
+/* ── BADGES ── */
+.bdg{display:inline-flex;font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:20px;white-space:nowrap}
+.bl{background:var(--gbg);color:var(--green);border:1px solid rgba(42,122,90,.2)}
+.bp{background:var(--abg);color:var(--amber);border:1px solid rgba(196,122,32,.2)}
+.bn{background:rgba(26,43,69,.06);color:var(--t3);border:1px solid var(--b)}
+.bu{background:var(--rbg);color:var(--red);border:1px solid rgba(192,64,64,.2)}
+.bplan{background:var(--bbg);color:var(--blue);border:1px solid rgba(58,104,192,.2)}
+.bdes{background:var(--tbg);color:var(--teal);border:1px solid rgba(26,128,128,.2)}
+
+/* ── ALIGNMENT ── */
+.fl{display:inline-flex;font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px}
+.fl-r{background:rgba(192,64,64,.1);color:#C04040}
+.fl-g{background:rgba(42,122,90,.1);color:#2A7A5A}
+.fl-a{background:rgba(196,145,58,.1);color:#A07020}
+
+/* ── PROGRESS ── */
+.prw{display:flex;align-items:center;gap:5px}
+.prb{height:4px;background:var(--crd);border-radius:3px;min-width:44px;overflow:hidden}
+.prf{height:100%;border-radius:3px}
+.prp{font-size:8px;color:var(--t3);width:24px;flex-shrink:0}
+
+/* ── LINKS ── */
+a.lnk{display:inline-flex;align-items:center;gap:2px;font-family:'DM Mono',monospace;font-size:9px;color:var(--nvl);text-decoration:none;padding:1px 5px;border-radius:3px;background:var(--crm);border:1px solid var(--b);transition:.1s;white-space:nowrap}
+a.lnk:hover{background:var(--crd)}
+a.lnk.fig{background:var(--pbg);border-color:rgba(122,79,192,.2);color:var(--purple)}
+
+/* ── CAT ── */
+.cat{font-size:7.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--t3);margin:12px 0 8px;display:flex;align-items:center;gap:6px}
+.cat::after{content:'';flex:1;height:1px;background:var(--b)}
+
+/* ── MILESTONES ── */
+.ms-card{display:flex;margin-bottom:6px;border-radius:var(--r);overflow:hidden;box-shadow:0 1px 4px rgba(26,43,69,.06)}
+.ms-left{width:4px;flex-shrink:0}
+.ms-info{width:220px;flex-shrink:0;background:var(--crc);border:1px solid var(--b);border-left:none;border-right:none;padding:9px 11px}
+.ms-right{flex:1;background:white;border:1px solid var(--b);border-left:none;border-radius:0 var(--r) var(--r) 0;padding:9px 13px;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.ms-track{height:6px;background:var(--crm);border-radius:3px;overflow:hidden}
+.ms-fill{height:100%;border-radius:3px}
+.ms-tgt{font-family:'DM Mono',monospace;font-size:8.5px}
+.ms-tgt.ov{color:var(--red)}.ms-tgt.nr{color:var(--amber)}.ms-tgt.ok{color:var(--green)}
+
+/* ── CALENDAR ── */
+.cal-wrap{background:var(--crc);border:1px solid var(--b);border-radius:var(--rl);padding:15px;margin-bottom:14px}
+.cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dn{font-size:7.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);text-align:center;padding:3px 0}
+.cal-cell{min-height:62px;background:white;border:1px solid var(--b);border-radius:5px;padding:4px;transition:.1s}
+.cal-cell.empty{background:transparent;border-color:transparent}
+.cal-cell.today{border-color:var(--gold);background:var(--gop)}
+.cal-n{font-size:9.5px;font-weight:600;color:var(--t2);margin-bottom:2px}
+.cal-cell.today .cal-n{color:var(--gold)}
+.cal-ev{font-size:7px;padding:1px 3px;border-radius:2px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cev-u{background:var(--rbg);color:var(--red)}.cev-h{background:var(--abg);color:var(--amber)}
+.cev-s{background:var(--bbg);color:var(--blue)}.cev-m{background:var(--pbg);color:var(--purple)}
+
+/* ── QUICK FIX / TASKS ── */
+.qfr{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--crc);border:1px solid var(--b);border-radius:var(--r);margin-bottom:5px}
+.qfcb{width:16px;height:16px;border:2px solid var(--bm);border-radius:4px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;transition:.1s}
+.qfcb.chk{background:var(--green);border-color:var(--green);color:white}
+.qfcb.round{border-radius:50%}
+
+/* ── PIPELINE ── */
+.pipe-r{display:flex;align-items:center;gap:8px;padding:9px 13px;background:var(--crc);border:1px solid var(--b);border-radius:var(--r);margin-bottom:5px;transition:.1s}
+.pipe-r:hover{transform:translateX(2px)}
+
+/* ── APPROVALS ── */
+.appr-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.appr-col{background:var(--crc);border:1px solid var(--b);border-radius:var(--rl);overflow:hidden}
+.appr-ch{padding:9px 13px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between}
+.appr-items{padding:7px;min-height:140px}
+.appr-card{background:white;border:1px solid var(--b);border-radius:var(--r);padding:9px 11px;margin-bottom:5px}
+
+/* ── FEATURES ── */
+.fm-tag{display:inline-flex;align-items:center;gap:3px;font-size:9px;padding:2px 6px;border-radius:10px;margin:2px}
+.fm-done{background:var(--gbg);color:var(--green);border:1px solid rgba(42,122,90,.18)}
+.fm-prog{background:var(--abg);color:var(--amber);border:1px solid rgba(196,122,32,.18)}
+.fm-miss{background:var(--rbg);color:var(--red);border:1px solid rgba(192,64,64,.18)}
+.dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;display:inline-block}
+.dot-g{background:var(--green)}.dot-a{background:var(--gold)}.dot-r{background:var(--red)}
+
+/* ── ASSETS / SOCIAL MODULE ── */
+.asset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:16px}
+.asset-card{background:white;border:1px solid var(--b);border-radius:var(--rl);overflow:hidden;transition:.12s}
+.asset-card:hover{box-shadow:0 4px 16px rgba(26,43,69,.1);transform:translateY(-1px)}
+.asset-thumb{height:140px;display:flex;align-items:center;justify-content:center;font-size:36px;border-bottom:1px solid var(--b)}
+.asset-body{padding:12px 14px}
+.asset-name{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:3px}
+.asset-meta{font-size:9.5px;color:var(--t3);margin-bottom:8px}
+.asset-actions{display:flex;gap:5px}
+
+/* ── OVERVIEW GRID ── */
+.ov-g{display:grid;grid-template-columns:1.6fr 1fr;gap:12px;margin-bottom:14px}
+.ov-card{background:var(--crc);border:1px solid var(--b);border-radius:var(--rl);padding:13px}
+.ov-card h4{font-size:7.5px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--t3);margin-bottom:9px}
+
+/* ── PHASE ── */
+.phase{display:inline-flex;font-size:7.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:10px}
+.ph-dis{background:rgba(26,43,69,.06);color:var(--t3)}
+.ph-des{background:var(--tbg);color:var(--teal)}
+.ph-dev{background:var(--bbg);color:var(--blue)}
+.ph-live{background:var(--gbg);color:var(--green)}
+.it-cl{background:var(--bbg);color:var(--blue);border:1px solid rgba(58,104,192,.2);font-size:8px;padding:2px 6px;border-radius:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;display:inline-flex}
+.it-ad{background:var(--pbg);color:var(--purple);border:1px solid rgba(122,79,192,.2);font-size:8px;padding:2px 6px;border-radius:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;display:inline-flex}
+.it-pa{background:var(--abg);color:var(--amber);border:1px solid rgba(196,122,32,.2);font-size:8px;padding:2px 6px;border-radius:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;display:inline-flex}
+
+/* ── MODAL ── */
+.modal-ov{position:fixed;inset:0;background:rgba(17,29,46,.55);z-index:1000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.modal-ov.open{display:flex}
+.modal{background:var(--crc);border-radius:14px;padding:22px;width:580px;max-width:96vw;max-height:88vh;overflow-y:auto;border:1px solid var(--b);box-shadow:0 8px 40px rgba(17,29,46,.18)}
+.modal h3{font-family:'Cormorant Garant',serif;font-size:18px;font-weight:500;color:var(--navy);margin-bottom:13px}
+.modal-act{display:flex;gap:6px;justify-content:flex-end;margin-top:13px;padding-top:11px;border-top:1px solid var(--b)}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fg label{font-size:7.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t3)}
+.fg input,.fg select,.fg textarea{font-family:'DM Sans',sans-serif;font-size:11.5px;padding:6px 9px;border:1px solid var(--b);border-radius:6px;background:white;color:var(--t1);outline:none;width:100%;transition:.12s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--gold);box-shadow:0 0 0 2px rgba(196,145,58,.1)}
+.fg textarea{resize:vertical;min-height:50px}
+.fg-r{display:grid;gap:8px;margin-bottom:9px}
+.fg-r.c2{grid-template-columns:1fr 1fr}.fg-r.c3{grid-template-columns:1fr 1fr 1fr}.fg-r.c4{grid-template-columns:1fr 1fr 1fr 1fr}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(26,43,69,.14);border-radius:2px}
+
+/* ── REF CARDS ── */
+.ref-card{background:white;border:1px solid var(--b);border-radius:var(--rl);padding:14px 16px;margin-bottom:10px}
+.ref-card h4{font-family:'Cormorant Garant',serif;font-size:15px;font-weight:500;color:var(--navy);margin-bottom:10px}
+.ref-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.ref-box{background:var(--crm);border:1px solid var(--b);border-radius:var(--r);padding:9px 11px}
+.ref-box-title{font-size:7.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:6px}
+.ref-row{display:flex;align-items:center;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--b);font-size:10px}
+.ref-row:last-child{border-bottom:none}
+.ref-row span{color:var(--t2)}
+.ref-row small{color:var(--t3);font-size:9px;font-style:italic}
+</style>
+</head>
+<body>
+
+<!-- ══════ LOGIN ══════ -->
+<div id="login-screen">
+  <div class="login-brand">
+    <div class="wm">Baroque Group</div>
+    <div class="sm">Design Operating System</div>
+  </div>
+  <div class="login-box">
+    <h2>Welcome back</h2>
+    <p>Enter your access code to continue</p>
+    <label>Access Code</label>
+    <input type="password" id="login-input" placeholder="••••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Access Dashboard →</button>
+    <div class="login-err" id="login-err">Invalid access code. Please try again.</div>
+    <div class="login-roles">
+      <p>Quick access</p>
+      <div class="login-role-list">
+        <div class="lr" onclick="fillCode('BAROQUE2026')"><div class="role">Admin</div><div class="code">BAROQUE2026</div></div>
+        <div class="lr" onclick="fillCode('DESIGN2026')"><div class="role">Designer</div><div class="code">DESIGN2026</div></div>
+        <div class="lr" onclick="fillCode('DEV2026')"><div class="role">Developer</div><div class="code">DEV2026</div></div>
+        <div class="lr" onclick="fillCode('SF2026')"><div class="role">Salesforce</div><div class="code">SF2026</div></div>
+        <div class="lr" onclick="fillCode('SOCIAL2026')"><div class="role">Social / Media</div><div class="code">SOCIAL2026</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ APP ══════ -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sb">
+    <div class="sb-top">
+      <div class="sb-wm">Baroque Group</div>
+      <div class="sb-sm">Design OS</div>
+    </div>
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-avatar"></div>
+      <div><div class="sb-uname" id="sb-uname"></div><div class="sb-urole" id="sb-urole"></div></div>
+    </div>
+    <nav class="sb-nav" id="sb-nav"></nav>
+    <div class="sb-foot">
+      <div class="sb-date" id="sb-date"></div>
+      <div class="logout-btn" onclick="logout()">Sign out</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="tb-title" id="tb-title">Dashboard</div>
+        <div class="tb-sub" id="tb-sub">Baroque Group · Design Operating System</div>
+      </div>
+      <div class="tb-r">
+        <span class="toast" id="toast">✓ Saved</span>
+        <span class="role-pill" id="role-pill"></span>
+        <button class="btn" onclick="exportCSV()" id="btn-export" style="display:none">↓ CSV</button>
+        <button class="btn gold" onclick="saveAll()" id="btn-save" style="display:none">💾 Save</button>
+      </div>
+    </div>
+    <div class="ct" id="ct">
+
+      <!-- OVERVIEW -->
+      <div class="sec" id="sec-overview">
+        <div class="stats c6">
+          <div class="stat sg"><div class="lb">Live</div><div class="vl">14</div><div class="sb2">In production</div></div>
+          <div class="stat sa"><div class="lb">In Progress</div><div class="vl">9</div><div class="sb2">Active</div></div>
+          <div class="stat sb3"><div class="lb">To Design</div><div class="vl">7</div><div class="sb2">Not started</div></div>
+          <div class="stat sr"><div class="lb">Design Debt</div><div class="vl">2</div><div class="sb2">Dev ahead</div></div>
+          <div class="stat so"><div class="lb">Milestones</div><div class="vl">8</div><div class="sb2">Q2 targets</div></div>
+          <div class="stat sp"><div class="lb">Open Fixes</div><div class="vl" id="ov-qf">6</div><div class="sb2">Quick fix</div></div>
+        </div>
+        <div class="alert red">🔴 <strong>Design Debt:</strong> Baroque Aviation Admin portal is in active development (75%) without completed design. Baroque Travel has zero admin design. Designer must start both immediately.</div>
+        <div class="aleg">
+          <span class="aleg-t">Alignment</span>
+          <span class="aleg-i">🔴 Dev ahead — fix now</span>
+          <span class="aleg-i">🟡 Aligned — maintain</span>
+          <span class="aleg-i">✅ Design ahead — target state</span>
+          <span class="aleg-n">Design must always lead Development</span>
+        </div>
+        <div class="ov-g">
+          <div class="ov-card">
+            <h4>Vertical Snapshot</h4>
+            <table>
+              <thead><tr><th>Vertical</th><th>Client Site</th><th>Admin</th><th>Agent</th><th>Partner</th><th>App</th><th>Align</th></tr></thead>
+              <tbody>
+                <tr><td class="str">Access</td><td><span class="bdg bl">Live</span></td><td><span class="bdg bn">—</span></td><td><span class="bdg bn">—</span></td><td><span class="bdg bn">—</span></td><td>—</td><td><span class="fl fl-a">🟡</span></td></tr>
+                <tr><td class="str">Aviation</td><td><span class="bdg bl">Live</span></td><td><span class="bdg bu">🔴 Dev Ahead</span></td><td><span class="bdg bu">🔴 Dev Ahead</span></td><td><span class="bdg bn">—</span></td><td>—</td><td><span class="fl fl-r">🔴</span></td></tr>
+                <tr><td class="str">Yachts</td><td><span class="bdg bp">In Design</span></td><td><span class="bdg bp">Active</span></td><td><span class="bdg bp">Active</span></td><td><span class="bdg bp">Active</span></td><td>—</td><td><span class="fl fl-g">✅</span></td></tr>
+                <tr><td class="str">Properties</td><td><span class="bdg bl">Live</span></td><td><span class="bdg bl">Live</span></td><td><span class="bdg bl">Live</span></td><td><span class="bdg bl">Live</span></td><td>—</td><td><span class="fl fl-a">🟡</span></td></tr>
+                <tr><td class="str">Travel</td><td><span class="bdg bl">Live</span></td><td><span class="bdg bu">🔴 Missing</span></td><td><span class="bdg bu">🔴 Missing</span></td><td>—</td><td>—</td><td><span class="fl fl-r">🔴</span></td></tr>
+                <tr><td class="str">Lujo</td><td><span class="bdg bl">Live</span></td><td><span class="bdg bl">Live</span></td><td><span class="bdg bl">Live</span></td><td><span class="bdg bl">Live</span></td><td><span class="bdg bp">V2</span></td><td><span class="fl fl-g">✅</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="ov-card">
+            <h4>Next Milestones</h4>
+            <div id="ov-ms"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MILESTONES -->
+      <div class="sec" id="sec-milestones">
+        <div class="sh"><div class="sh-l"><div class="sh-t">Milestones</div><span class="sh-tag">Q2 2026</span></div><div class="sh-r"><button class="btn pri sm admin-only" onclick="openM('ms-modal')">+ Add</button></div></div>
+        <div id="ms-container"></div>
+      </div>
+
+      <!-- CALENDAR -->
+      <div class="sec" id="sec-calendar">
+        <div class="sh"><div class="sh-l"><div class="sh-t">Delivery Calendar</div><span class="sh-tag" id="cal-lbl"></span></div><div class="sh-r"><button class="btn sm" onclick="calP()">← Prev</button><button class="btn sm" onclick="calT()">Today</button><button class="btn sm" onclick="calN()">Next →</button></div></div>
+        <div class="cal-wrap"><div class="cal-g" id="cal-dn"></div><div class="cal-g" id="cal-cells" style="margin-top:3px"></div></div>
+      </div>
+
+      <!-- PIPELINE -->
+      <div class="sec" id="sec-pipeline">
+        <div class="sh"><div class="sh-l"><div class="sh-t">Design Pipeline</div><span class="sh-tag">Design must lead dev</span></div><div class="sh-r"><button class="btn pri sm admin-only" onclick="openM('pipe-modal')">+ Add</button></div></div>
+        <div id="pipe-container"></div>
+      </div>
+
+      <!-- FEATURES -->
+      <div class="sec" id="sec-features">
+        <div class="sh"><div class="sh-l"><div class="sh-t">Feature Modules</div><span class="sh-tag">Per Vertical</span></div><div class="sh-r"><select id="feat-f" onchange="renderFeat()" style="font-size:10.5px;padding:4px 8px;border:1px solid var(--b);border-radius:6px;background:var(--cream);outline:none"><option value="">All Verticals</option><option>Baroque Access</option><option>Baroque Aviation</option><option>Baroque Yachts</option><option>Baroque Properties</option><option>Baroque Travel</option><option>Lujo</option></select></div></div>
+        <div id="feat-container"></div>
+      </div>
+
+      <!-- PROJECTS -->
+      <div class="sec" id="sec-projects">
+        <div class="sh"><div class="sh-l"><div class="sh-t">All Projects</div><span class="sh-tag" id="proj-ct">Loading…</span></div><div class="sh-r"><button class="btn pri sm admin-only" onclick="openM('proj-modal')">+ Add</button></div></div>
+        <div class="tw">
+          <div class="tf">
+            <label>Type</label><select id="f-type" onchange="renderProj()"><option value="">All</option><option>Website</option><option>Dashboard</option><option>Backend</option><option>Mobile App</option></select>
+            <label>Vertical</label><select id="f-dept" onchange="renderProj()"><option value="">All</option><option>Baroque Access</option><option>Baroque Aviation</option><option>Baroque Yachts</option><option>Baroque Properties</option><option>Twilio</option><option>Lujo</option><option>Baroque Lifestyle</option><option>Baroque Travel</option><option>Baroque Ground</option><option>Baroque Group</option></select>
+            <label>Status</label><select id="f-status" onchange="renderProj()"><option value="">All</option><option>Live</option><option>In Progress</option><option>In Design</option><option>Not Started</option><option>Planned</option></select>
+            <label>Align</label><select id="f-align" onchange="renderProj()"><option value="">All</option><option value="dev-ahead">🔴 Dev Ahead</option><option value="aligned">🟡 Aligned</option><option value="design-ahead">✅ Design Ahead</option></select>
+            <input type="text" id="f-search" placeholder="Search…" oninput="renderProj()">
+          </div>
+          <div class="tov"><table><thead><tr><th>Interface</th><th>Component</th><th>Vertical</th><th>Stack</th><th>Live</th><th>Staging</th><th>Figma</th><th>Design%</th><th>Dev%</th><th>Alignment</th><th>Phase</th><th>Status</th><th>Owner</th><th>Target</th><th>Actions</th></tr></thead><tbody id="proj-tbody"></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- QUICK FIX -->
+      <div class="sec" id="sec-quickfix">
+        <div class="sh"><div class="sh-l"><div class="sh-t">Quick Fix</div><span class="sh-tag">1-day tasks</span></div><div class="sh-r"><button class="btn pri sm" onclick="openM('qf-modal')">+ Add</button></div></div>
+        <div class="tw">
+          <div class="tf">
+            <label>Vertical</label><select id="qf-fd" onchange="renderQF()"><option value="">All</option><option>Baroque Access</option><option>Baroque Aviation</option><option>Baroque Yachts</option><option>Baroque Properties</option><option>Lujo</option><option>Baroque Travel</option><option>All Verticals</option></select>
+            <label>Priority</label><select id="qf-fp" onchange="renderQF()"><option value="">All</option><option>Urgent</option><option>High</option><option>Standard</option></select>
+            <label>Status</label><select id="qf-fs" onchange="renderQF()"><option value="">All</option><option>Not Started</option><option>In Progress</option><option>Done</option></select>
+            <input type="text" id="qf-fq" placeholder="Search…" oninput="renderQF()">
+          </div>
+          <div style="padding:9px" id="qf-list"></div>
+        </div>
+      </div>
+
+      <!-- DAILY -->
+      <div class="sec" id="sec-daily">
+        <div class="sh"><div class="sh-l"><div class="sh-t">Daily Tasks</div><span class="sh-tag" id="dt-lbl"></span></div><div class="sh-r"><button class="btn pri sm" onclick="openM('dt-modal')">+ Add</button></div></div>
+        <div class="tw">
+          <div class="tf">
+            <label>Priority</label><select id="dt-fp" onchange="renderDT()"><option value="">All</option><option>High</option><option>Medium</option><option>Low</option></select>
+            <input type="text" id="dt-fq" placeholder="Search…" oninput="renderDT()">
+          </div>
+          <div style="padding:9px" id="dt-list"></div>
+        </div>
+      </div>
+
+      <!-- APPROVALS -->
+      <div class="sec" id="sec-approvals">
+        <div class="sh"><div class="sh-l"><div class="sh-t">Approvals</div><span class="sh-tag">Review · Approve · Reject</span></div><div class="sh-r"><button class="btn pri sm" onclick="openM('appr-modal')">+ Submit</button></div></div>
+        <div class="appr-cols">
+          <div class="appr-col"><div class="appr-ch"><span style="font-size:9.5px;font-weight:700;color:var(--amber)">🔄 For Approval</span><span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;background:var(--abg);color:var(--amber)" id="cnt-p">0</span></div><div class="appr-items" id="appr-p"></div></div>
+          <div class="appr-col"><div class="appr-ch"><span style="font-size:9.5px;font-weight:700;color:var(--green)">✅ Approved</span><span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;background:var(--gbg);color:var(--green)" id="cnt-a">0</span></div><div class="appr-items" id="appr-a"></div></div>
+          <div class="appr-col"><div class="appr-ch"><span style="font-size:9.5px;font-weight:700;color:var(--red)">❌ Rejected</span><span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;background:var(--rbg);color:var(--red)" id="cnt-r">0</span></div><div class="appr-items" id="appr-r"></div></div>
+        </div>
+      </div>
+
+      <!-- EMAIL -->
+      <div class="sec" id="sec-email">
+        <div class="sh"><div class="sh-l"><div class="sh-t">Email & Notification Library</div><span class="sh-tag">All Verticals</span></div><div class="sh-r"><button class="btn pri sm admin-only" onclick="openM('em-modal')">+ Add</button></div></div>
+        <div id="em-container"></div>
+      </div>
+
+      <!-- DESIGN REFERENCES -->
+      <div class="sec" id="sec-references">
+        <div class="sh"><div class="sh-l"><div class="sh-t">Design References</div><span class="sh-tag">Benchmarks · Competitors · UX Inspiration</span></div></div>
+        <div id="ref-container"></div>
+      </div>
+
+      <!-- ASSETS / SOCIAL MODULE -->
+      <div class="sec" id="sec-assets">
+        <div class="sh"><div class="sh-l"><div class="sh-t">Content & Asset Library</div><span class="sh-tag">Approved Assets · Shareable Links</span></div><div class="sh-r"><button class="btn pri sm" onclick="openM('asset-modal')">+ Add Asset</button></div></div>
+        <div class="alert gold">✅ This section contains only approved, shareable assets. All links are final and ready to use.</div>
+        <div class="tw" style="margin-bottom:14px">
+          <div class="tf">
+            <label>Vertical</label>
+            <select id="ast-fd" onchange="renderAssets()"><option value="">All</option><option>Baroque Access</option><option>Baroque Aviation</option><option>Baroque Yachts</option><option>Baroque Properties</option><option>Lujo</option><option>Baroque Travel</option><option>Baroque Group</option></select>
+            <label>Type</label>
+            <select id="ast-ft" onchange="renderAssets()"><option value="">All</option><option>Image</option><option>Video</option><option>Campaign</option><option>Brand Kit</option><option>Email Template</option><option>Social Post</option></select>
+            <label>Status</label>
+            <select id="ast-fs" onchange="renderAssets()"><option value="">All</option><option>Approved</option><option>Pending Review</option></select>
+            <input type="text" id="ast-fq" placeholder="Search…" oninput="renderAssets()">
+          </div>
+        </div>
+        <div class="asset-grid" id="asset-grid"></div>
+      </div>
+
+      <!-- SOCIAL TRACKER -->
+      <div class="sec" id="sec-social">
+        <div class="sh"><div class="sh-l"><div class="sh-t">Social Media Tracker</div><span class="sh-tag">All Verticals</span></div></div>
+        <div class="tw"><div class="tov"><table><thead><tr><th>Vertical</th><th>Instagram</th><th>LinkedIn</th><th>TikTok</th><th>Content Status</th><th>Frequency</th><th>Notes</th></tr></thead><tbody id="social-tbody"></tbody></table></div></div>
+      </div>
+
+    </div><!-- /ct -->
+  </main>
+</div><!-- /app -->
+
+<!-- MODALS -->
+<div class="modal-ov" id="ms-modal"><div class="modal"><h3>Add / Edit Milestone</h3>
+  <div class="fg-r c2"><div class="fg"><label>Name</label><input id="msm-name" placeholder="Milestone name…"></div><div class="fg"><label>Vertical</label><select id="msm-dept"><option>Baroque Aviation</option><option>Baroque Yachts</option><option>Lujo</option><option>Baroque Travel</option><option>Baroque Access</option><option>Baroque Properties</option><option>All Verticals</option></select></div></div>
+  <div class="fg-r c4"><div class="fg"><label>Target Date</label><input id="msm-target" type="date"></div><div class="fg"><label>Priority</label><select id="msm-pri"><option>Urgent</option><option>High</option><option>Standard</option></select></div><div class="fg"><label>Owner</label><select id="msm-owner"><option>Design</option><option>Dev</option><option>Both</option><option>Management</option></select></div><div class="fg"><label>Progress %</label><input id="msm-prog" type="number" min="0" max="100" value="0"></div></div>
+  <div class="fg"><label>Description</label><textarea id="msm-desc" rows="2"></textarea></div>
+  <input type="hidden" id="msm-id">
+  <div class="modal-act"><button class="btn" onclick="closeM('ms-modal')">Cancel</button><button class="btn gold" onclick="saveMilestone()">Save</button></div>
+</div></div>
+
+<div class="modal-ov" id="proj-modal"><div class="modal"><h3>Add / Edit Project</h3>
+  <div class="fg-r c4"><div class="fg"><label>Type</label><select id="pm-type"><option>Website</option><option>Dashboard</option><option>Backend</option><option>Mobile App</option></select></div><div class="fg"><label>Interface</label><select id="pm-itype"><option>Client-facing</option><option>Admin</option><option>Agent</option><option>Partner/Supplier</option><option>Backend</option><option>Mobile App</option></select></div><div class="fg"><label>Vertical</label><select id="pm-dept"><option>Baroque Access</option><option>Baroque Aviation</option><option>Baroque Yachts</option><option>Baroque Properties</option><option>Twilio</option><option>Lujo</option><option>Baroque Lifestyle</option><option>Baroque Travel</option><option>Baroque Ground</option><option>Baroque Group</option></select></div><div class="fg"><label>Component</label><input id="pm-comp" placeholder="e.g. Admin Dashboard"></div></div>
+  <div class="fg-r c3"><div class="fg"><label>Tech Stack</label><input id="pm-stack"></div><div class="fg"><label>Owner</label><input id="pm-owner" placeholder="Designer, Sohail…"></div><div class="fg"><label>Phase</label><select id="pm-phase"><option>Discovery</option><option>In Design</option><option>In Development</option><option>QA</option><option>Live</option></select></div></div>
+  <div class="fg-r c3"><div class="fg"><label>Live URL</label><input id="pm-live" placeholder="https://…"></div><div class="fg"><label>Staging URL</label><input id="pm-test" placeholder="https://…"></div><div class="fg"><label>Figma URL</label><input id="pm-figma" placeholder="https://figma.com/…"></div></div>
+  <div class="fg-r c4"><div class="fg"><label>Design %</label><input id="pm-dpct" type="number" min="0" max="100"></div><div class="fg"><label>Dev %</label><input id="pm-devpct" type="number" min="0" max="100"></div><div class="fg"><label>Status</label><select id="pm-status"><option>Live</option><option>In Progress</option><option>In Design</option><option>In Development</option><option>Not Started</option><option>Planned</option></select></div><div class="fg"><label>Priority</label><select id="pm-pri"><option>Urgent</option><option>High</option><option>Standard</option></select></div></div>
+  <div class="fg-r c2"><div class="fg"><label>Target Date</label><input id="pm-target" type="date"></div><div class="fg"><label>Notes</label><input id="pm-notes"></div></div>
+  <input type="hidden" id="pm-id">
+  <div class="modal-act"><button class="btn" onclick="closeM('proj-modal')">Cancel</button><button class="btn gold" onclick="saveProject()">Save</button></div>
+</div></div>
+
+<div class="modal-ov" id="qf-modal"><div class="modal"><h3>Add Quick Fix</h3>
+  <div class="fg-r c2"><div class="fg"><label>Task</label><input id="qfm-task" placeholder="Describe the fix…"></div><div class="fg"><label>Vertical</label><select id="qfm-dept"><option>Baroque Access</option><option>Baroque Aviation</option><option>Baroque Yachts</option><option>Baroque Properties</option><option>Lujo</option><option>Baroque Travel</option><option>All Verticals</option></select></div></div>
+  <div class="fg-r c3"><div class="fg"><label>Priority</label><select id="qfm-pri"><option>Urgent</option><option>High</option><option>Standard</option></select></div><div class="fg"><label>Assigned To</label><input id="qfm-owner" placeholder="Designer, Sohail…"></div><div class="fg"><label>Status</label><select id="qfm-st"><option>Not Started</option><option>In Progress</option><option>Done</option></select></div></div>
+  <div class="fg"><label>Description</label><textarea id="qfm-desc" rows="2"></textarea></div>
+  <input type="hidden" id="qfm-id">
+  <div class="modal-act"><button class="btn" onclick="closeM('qf-modal')">Cancel</button><button class="btn gold" onclick="saveQF()">Save</button></div>
+</div></div>
+
+<div class="modal-ov" id="dt-modal"><div class="modal"><h3>Add Daily Task</h3>
+  <div class="fg-r c2"><div class="fg"><label>Task</label><input id="dtm-task" placeholder="What needs doing…"></div><div class="fg"><label>Vertical</label><select id="dtm-dept"><option>Baroque Access</option><option>Baroque Aviation</option><option>Baroque Yachts</option><option>Baroque Properties</option><option>Lujo</option><option>Baroque Travel</option><option>All Verticals</option></select></div></div>
+  <div class="fg-r c3"><div class="fg"><label>Date</label><input id="dtm-date" type="date"></div><div class="fg"><label>Priority</label><select id="dtm-pri"><option>High</option><option>Medium</option><option>Low</option></select></div><div class="fg"><label>Assigned To</label><input id="dtm-owner" placeholder="Name…"></div></div>
+  <div class="modal-act"><button class="btn" onclick="closeM('dt-modal')">Cancel</button><button class="btn gold" onclick="saveDT()">Save</button></div>
+</div></div>
+
+<div class="modal-ov" id="appr-modal"><div class="modal"><h3>Submit for Approval</h3>
+  <div class="fg-r c2"><div class="fg"><label>Item Name</label><input id="am-name" placeholder="What needs approval…"></div><div class="fg"><label>Vertical</label><select id="am-dept"><option>Baroque Access</option><option>Baroque Aviation</option><option>Baroque Yachts</option><option>Baroque Properties</option><option>Lujo</option><option>Baroque Travel</option><option>All Verticals</option></select></div></div>
+  <div class="fg-r c2"><div class="fg"><label>Source</label><select id="am-src"><option>Projects</option><option>Design</option><option>Development</option><option>Email Template</option><option>Other</option></select></div><div class="fg"><label>Link</label><input id="am-link" placeholder="https://…"></div></div>
+  <div class="fg"><label>Details</label><textarea id="am-details" rows="2"></textarea></div>
+  <div class="modal-act"><button class="btn" onclick="closeM('appr-modal')">Cancel</button><button class="btn gold" onclick="saveApproval()">Submit</button></div>
+</div></div>
+
+<div class="modal-ov" id="pipe-modal"><div class="modal"><h3>Add to Design Pipeline</h3>
+  <div class="fg-r c2"><div class="fg"><label>Design Task</label><input id="pim-name" placeholder="e.g. Aviation Supplier Portal Design"></div><div class="fg"><label>Vertical</label><select id="pim-dept"><option>Baroque Access</option><option>Baroque Aviation</option><option>Baroque Yachts</option><option>Baroque Properties</option><option>Lujo</option><option>Baroque Travel</option></select></div></div>
+  <div class="fg-r c3"><div class="fg"><label>Priority</label><select id="pim-pri"><option>Urgent</option><option>High</option><option>Standard</option></select></div><div class="fg"><label>Target Date</label><input id="pim-target" type="date"></div><div class="fg"><label>Dependency</label><input id="pim-dep" placeholder="Waiting on…"></div></div>
+  <div class="modal-act"><button class="btn" onclick="closeM('pipe-modal')">Cancel</button><button class="btn gold" onclick="savePipeline()">Add</button></div>
+</div></div>
+
+<div class="modal-ov" id="em-modal"><div class="modal"><h3>Add Email / Notification Template</h3>
+  <div class="fg-r c2"><div class="fg"><label>Template Name</label><input id="emm-name" placeholder="e.g. Booking Confirmation"></div><div class="fg"><label>Vertical</label><select id="emm-dept"><option>All Verticals</option><option>Baroque Aviation</option><option>Baroque Yachts</option><option>Baroque Properties</option><option>Lujo</option><option>Baroque Travel</option></select></div></div>
+  <div class="fg-r c3"><div class="fg"><label>Type</label><select id="emm-type"><option>Booking</option><option>Confirmation</option><option>Reminder</option><option>Upsell</option><option>System</option><option>Newsletter</option><option>WhatsApp</option><option>Push Notification</option></select></div><div class="fg"><label>Platform</label><select id="emm-plat"><option>Salesforce MC</option><option>Custom</option><option>Twilio WhatsApp</option><option>iOS/Android Push</option></select></div><div class="fg"><label>Status</label><select id="emm-st"><option>Live</option><option>In Progress</option><option>Not Started</option><option>Template Built</option></select></div></div>
+  <div class="modal-act"><button class="btn" onclick="closeM('em-modal')">Cancel</button><button class="btn gold" onclick="saveEmail()">Save</button></div>
+</div></div>
+
+<div class="modal-ov" id="asset-modal"><div class="modal"><h3>Add Content Asset</h3>
+  <div class="fg-r c2"><div class="fg"><label>Asset Name</label><input id="astm-name" placeholder="e.g. Summer Campaign — Yachts"></div><div class="fg"><label>Vertical</label><select id="astm-dept"><option>Baroque Access</option><option>Baroque Aviation</option><option>Baroque Yachts</option><option>Baroque Properties</option><option>Lujo</option><option>Baroque Travel</option><option>Baroque Group</option></select></div></div>
+  <div class="fg-r c3"><div class="fg"><label>Asset Type</label><select id="astm-type"><option>Image</option><option>Video</option><option>Campaign</option><option>Brand Kit</option><option>Email Template</option><option>Social Post</option></select></div><div class="fg"><label>Status</label><select id="astm-st"><option>Approved</option><option>Pending Review</option></select></div><div class="fg"><label>Campaign / Label</label><input id="astm-campaign" placeholder="Q2 Summer…"></div></div>
+  <div class="fg-r c2"><div class="fg"><label>Asset Link (Google Drive / Dropbox / Figma)</label><input id="astm-link" placeholder="https://drive.google.com/…"></div><div class="fg"><label>Preview / Thumbnail URL (optional)</label><input id="astm-thumb" placeholder="https://…"></div></div>
+  <div class="fg"><label>Notes</label><textarea id="astm-notes" rows="2"></textarea></div>
+  <div class="modal-act"><button class="btn" onclick="closeM('asset-modal')">Cancel</button><button class="btn gold" onclick="saveAsset()">Save Asset</button></div>
+</div></div>
+
+<script>
+// ═══════════════════════════════════
+// AUTH
+// ═══════════════════════════════════
+var ROLES={
+  'BAROQUE2026':{name:'Sahle',role:'Admin',color:'#C4913A',bg:'rgba(196,145,58,.15)'},
+  'DESIGN2026':{name:'Designer',role:'Designer',color:'#1A8080',bg:'rgba(26,128,128,.15)'},
+  'DEV2026':{name:'Developer',role:'Developer',color:'#3A68C0',bg:'rgba(58,104,192,.15)'},
+  'SF2026':{name:'SF Admin',role:'Salesforce',color:'#7A4FC0',bg:'rgba(122,79,192,.15)'},
+  'SOCIAL2026':{name:'Social Team',role:'Social / Media',color:'#C04040',bg:'rgba(192,64,64,.15)'}
+};
+var SECTIONS={
+  Admin:['overview','milestones','calendar','pipeline','features','projects','quickfix','daily','approvals','email','references','assets','social'],
+  Designer:['overview','milestones','calendar','pipeline','features','projects','quickfix','daily','approvals','email','references'],
+  Developer:['overview','milestones','calendar','projects','quickfix','daily','email'],
+  Salesforce:['overview','projects','email','daily','approvals'],
+  'Social / Media':['assets']
+};
+var SEC_LABELS={
+  overview:{ic:'🏠',lb:'Overview'},milestones:{ic:'🎯',lb:'Milestones'},
+  calendar:{ic:'🗓️',lb:'Calendar'},pipeline:{ic:'⚡',lb:'Design Pipeline'},
+  features:{ic:'🧩',lb:'Feature Modules'},projects:{ic:'📋',lb:'All Projects'},
+  quickfix:{ic:'🔧',lb:'Quick Fix'},daily:{ic:'✅',lb:'Daily Tasks'},
+  approvals:{ic:'🔄',lb:'Approvals'},email:{ic:'📧',lb:'Email Library'},
+  references:{ic:'📐',lb:'Design References'},assets:{ic:'🖼️',lb:'Content Assets'},
+  social:{ic:'📱',lb:'Social Tracker'}
+};
+var SEC_GROUPS={
+  Admin:{'Command':['overview','milestones','calendar'],'Design':['pipeline','features','references'],'Projects':['projects','quickfix','daily'],'Workflow':['approvals','email','assets','social']},
+  Designer:{'Command':['overview','milestones','calendar'],'Design':['pipeline','features','references'],'Projects':['projects','quickfix','daily','approvals','email']},
+  Developer:{'Command':['overview','milestones','calendar'],'Projects':['projects','quickfix','daily','email']},
+  Salesforce:{'Command':['overview'],'Workflow':['projects','email','daily','approvals']},
+  'Social / Media':{'Content':['assets']}
+};
+var ROLE_PILL_COLORS={Admin:'background:#C4913A;color:white',Designer:'background:#1A8080;color:white',Developer:'background:#3A68C0;color:white',Salesforce:'background:#7A4FC0;color:white','Social / Media':'background:#C04040;color:white'};
+
+var currentUser=null;
+
+function fillCode(c){document.getElementById('login-input').value=c;}
+function doLogin(){
+  var code=document.getElementById('login-input').value.trim().toUpperCase();
+  var user=ROLES[code];
+  if(!user){document.getElementById('login-err').style.display='block';return;}
+  document.getElementById('login-err').style.display='none';
+  currentUser=user;
+  sessionStorage.setItem('bq-user',JSON.stringify(user));
+  initApp();
+}
+function logout(){
+  sessionStorage.removeItem('bq-user');
+  currentUser=null;
+  document.getElementById('app').classList.remove('show');
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-input').value='';
+}
+
+function initApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').classList.add('show');
+
+  var u=currentUser;
+  var av=document.getElementById('sb-avatar');
+  av.textContent=u.name.split(' ').map(function(w){return w[0]}).join('').slice(0,2);
+  av.style.background=u.bg;av.style.color=u.color;
+  document.getElementById('sb-uname').textContent=u.name;
+  document.getElementById('sb-urole').textContent=u.role;
+  document.getElementById('sb-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short'});
+
+  var rp=document.getElementById('role-pill');
+  rp.textContent=u.role;rp.style.cssText=ROLE_PILL_COLORS[u.role]||'background:var(--crm);color:var(--t2)';
+  rp.style.cssText+=';font-size:8.5px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.08em;text-transform:uppercase';
+
+  var isAdmin=u.role==='Admin'||u.role==='Designer';
+  document.getElementById('btn-export').style.display=isAdmin?'':'none';
+  document.getElementById('btn-save').style.display=isAdmin?'':'none';
+  document.querySelectorAll('.admin-only').forEach(function(el){el.style.display=isAdmin?'':'none';});
+
+  buildNav();
+  load();
+  var firstSec=SECTIONS[u.role][0];
+  navTo(firstSec);
+}
+
+function buildNav(){
+  var groups=SEC_GROUPS[currentUser.role];
+  var html='';
+  Object.keys(groups).forEach(function(grp){
+    html+='<div class="sb-lbl">'+grp+'</div>';
+    groups[grp].forEach(function(id){
+      var s=SEC_LABELS[id];
+      html+='<div class="sbi" id="sbi-'+id+'" onclick="navTo(\''+id+'\')">';
+      html+='<span class="ic">'+s.ic+'</span><span class="st">'+s.lb+'</span>';
+      if(id==='quickfix')html+='<span class="sb-bdg r" id="sb-qf">6</span>';
+      if(id==='approvals')html+='<span class="sb-bdg" id="sb-appr">3</span>';
+      if(id==='pipeline')html+='<span class="sb-bdg" id="sb-pipe">10</span>';
+      html+='</div>';
+    });
+  });
+  document.getElementById('sb-nav').innerHTML=html;
+}
+
+var TITLES2={overview:'Overview',milestones:'Milestones & Targets',calendar:'Delivery Calendar',pipeline:'Design Pipeline',features:'Feature Modules',projects:'All Projects',quickfix:'Quick Fix Tasks',daily:'Daily Tasks',approvals:'Approvals',email:'Email & Notification Library',references:'Design References & Benchmarks',assets:'Content & Asset Library',social:'Social Media Tracker'};
+
+function navTo(id){
+  document.querySelectorAll('.sec').forEach(function(s){s.classList.remove('on')});
+  var sec=document.getElementById('sec-'+id);
+  if(sec)sec.classList.add('on');
+  document.querySelectorAll('.sbi').forEach(function(i){i.classList.remove('on')});
+  var sbi=document.getElementById('sbi-'+id);
+  if(sbi)sbi.classList.add('on');
+  document.getElementById('tb-title').textContent=TITLES2[id]||id;
+  renderSec(id);
+}
+
+// ═══════════════════════════════════
+// DATA
+// ═══════════════════════════════════
+var PROJ_DEF=[
+  {id:1,type:'Website',itype:'Client-facing',comp:'User Website',dept:'Baroque Access',stack:'HTML',live:'https://baroqueaccess.com/',test:'',figma:'',dpct:100,devpct:100,status:'Live',phase:'Live',owner:'Designer',pri:'Standard',target:'',notes:'Redesign in backlog.',align:'aligned'},
+  {id:2,type:'Website',itype:'Client-facing',comp:'User Website',dept:'Baroque Aviation',stack:'Angular',live:'https://www.baroqueaviation.com/',test:'https://dev.baroqueaviation.com/',figma:'',dpct:100,devpct:100,status:'Live',phase:'Live',owner:'Designer',pri:'Standard',target:'',notes:'',align:'aligned'},
+  {id:3,type:'Dashboard',itype:'Admin',comp:'Admin / Agent Dashboard',dept:'Baroque Aviation',stack:'PHP-Laravel',live:'',test:'https://test.baroqueaviation.com/login',figma:'',dpct:30,devpct:75,status:'In Development',phase:'In Development',owner:'Designer',pri:'Urgent',target:'2026-04-15',notes:'⚠️ Dev ahead — design must catch up NOW.',align:'dev-ahead'},
+  {id:4,type:'Dashboard',itype:'Partner/Supplier',comp:'Supplier Portal',dept:'Baroque Aviation',stack:'PHP-Laravel',live:'',test:'',figma:'',dpct:0,devpct:0,status:'Not Started',phase:'Discovery',owner:'—',pri:'High',target:'2026-06-30',notes:'Not scoped.',align:'aligned'},
+  {id:5,type:'Website',itype:'Client-facing',comp:'User Website — Redesign',dept:'Baroque Yachts',stack:'Vue.js',live:'https://www.baroqueyachts.com/',test:'https://dev.baroqueyachts.com/',figma:'',dpct:75,devpct:30,status:'In Design',phase:'In Design',owner:'Designer',pri:'Urgent',target:'2026-05-01',notes:'Files 1–7 done. File 8 pending.',align:'design-ahead'},
+  {id:6,type:'Dashboard',itype:'Admin',comp:'Admin / Agent Dashboard',dept:'Baroque Yachts',stack:'PHP-Laravel',live:'',test:'',figma:'',dpct:55,devpct:50,status:'In Progress',phase:'In Design',owner:'Designer',pri:'Urgent',target:'2026-05-15',notes:'',align:'design-ahead'},
+  {id:7,type:'Website',itype:'Client-facing',comp:'User Website',dept:'Baroque Properties',stack:'Angular',live:'https://baroqueproperties.com/',test:'',figma:'',dpct:90,devpct:100,status:'Live',phase:'Live',owner:'Designer',pri:'Standard',target:'',notes:'',align:'aligned'},
+  {id:8,type:'Dashboard',itype:'Admin',comp:'Admin Dashboard',dept:'Baroque Properties',stack:'Angular',live:'https://dashboard-dev.baroqueproperties.com/login',test:'',figma:'',dpct:100,devpct:100,status:'Live',phase:'Live',owner:'Designer',pri:'Standard',target:'',notes:'',align:'aligned'},
+  {id:9,type:'Dashboard',itype:'Partner/Supplier',comp:'Supplier Dashboard',dept:'Baroque Properties',stack:'Angular',live:'https://dashboard-dev.baroqueproperties.com/agent-dashboard',test:'',figma:'',dpct:100,devpct:100,status:'Live',phase:'Live',owner:'Designer',pri:'Standard',target:'',notes:'',align:'aligned'},
+  {id:10,type:'Website',itype:'Client-facing',comp:'User Website',dept:'Lujo',stack:'HTML',live:'https://www.golujo.com/',test:'',figma:'',dpct:100,devpct:100,status:'Live',phase:'Live',owner:'Designer',pri:'Standard',target:'',notes:'',align:'aligned'},
+  {id:11,type:'Dashboard',itype:'Admin',comp:'Admin Dashboard',dept:'Lujo',stack:'Angular',live:'https://admin.golujo.com/',test:'',figma:'',dpct:100,devpct:100,status:'Live',phase:'Live',owner:'Designer',pri:'Standard',target:'',notes:'',align:'aligned'},
+  {id:12,type:'Dashboard',itype:'Partner/Supplier',comp:'Partner Dashboard',dept:'Lujo',stack:'Angular',live:'https://partners.golujo.com/',test:'',figma:'',dpct:100,devpct:100,status:'Live',phase:'Live',owner:'Designer',pri:'Standard',target:'',notes:'',align:'aligned'},
+  {id:13,type:'Mobile App',itype:'Mobile App',comp:'iOS App V2',dept:'Lujo',stack:'Swift',live:'',test:'',figma:'',dpct:80,devpct:70,status:'In Progress',phase:'In Development',owner:'Designer',pri:'Urgent',target:'2026-05-15',notes:'5-tab nav locked.',align:'design-ahead'},
+  {id:14,type:'Mobile App',itype:'Mobile App',comp:'Android App V2',dept:'Lujo',stack:'Java/Kotlin',live:'',test:'',figma:'',dpct:80,devpct:65,status:'In Progress',phase:'In Development',owner:'Designer',pri:'Urgent',target:'2026-05-15',notes:'Mirror iOS V2.',align:'design-ahead'},
+  {id:15,type:'Website',itype:'Client-facing',comp:'User Website',dept:'Baroque Travel',stack:'Softr + Airtable',live:'https://www.baroquetravel.com/',test:'',figma:'',dpct:100,devpct:100,status:'Live',phase:'Live',owner:'Designer',pri:'High',target:'',notes:'Temp stack. Migration to SF EC planned.',align:'aligned'},
+  {id:16,type:'Dashboard',itype:'Admin',comp:'Admin Interface',dept:'Baroque Travel',stack:'TBD – SF EC',live:'',test:'',figma:'',dpct:0,devpct:0,status:'Not Started',phase:'Discovery',owner:'—',pri:'Urgent',target:'2026-07-01',notes:'🔴 Critical gap. No admin exists.',align:'dev-ahead'},
+  {id:17,type:'Website',itype:'Client-facing',comp:'User Website',dept:'Baroque Lifestyle',stack:'WordPress',live:'https://baroquelifestyle.com/',test:'',figma:'',dpct:100,devpct:100,status:'Live',phase:'Live',owner:'Designer',pri:'Standard',target:'',notes:'',align:'aligned'},
+  {id:18,type:'Website',itype:'Client-facing',comp:'User Website',dept:'Baroque Ground',stack:'HTML',live:'https://www.baroqueground.com/',test:'',figma:'',dpct:100,devpct:100,status:'Live',phase:'Live',owner:'Designer',pri:'Standard',target:'',notes:'',align:'aligned'},
+  {id:19,type:'Website',itype:'Client-facing',comp:'User Website',dept:'Baroque Group',stack:'HTML',live:'https://baroque-group.com/index.html',test:'',figma:'',dpct:100,devpct:100,status:'Live',phase:'Live',owner:'Designer',pri:'Standard',target:'',notes:'',align:'aligned'},
+  {id:20,type:'Dashboard',itype:'Admin',comp:'Admin / Agent Dashboard',dept:'Twilio',stack:'Angular + Loopback',live:'',test:'',figma:'',dpct:50,devpct:50,status:'In Progress',phase:'In Design',owner:'Designer',pri:'High',target:'2026-06-01',notes:'Custom Twilio (not Flex). Multi-vertical WhatsApp.',align:'aligned'},
+];
+var MS_DEF=[
+  {id:1,name:'Aviation Admin Portal — Design Complete',dept:'Baroque Aviation',target:'2026-04-15',pri:'Urgent',owner:'Design',prog:25,desc:'All admin screens needed before next dev sprint.'},
+  {id:2,name:'Lujo — Guest Preference Flow (File 8)',dept:'Lujo',target:'2026-04-22',pri:'Urgent',owner:'Design',prog:50,desc:'Final file of light navy/cream rebuild.'},
+  {id:3,name:'Yachts — Full Platform Handoff',dept:'Baroque Yachts',target:'2026-05-01',pri:'Urgent',owner:'Both',prog:75,desc:'Files 1–7 done. File 8 pending.'},
+  {id:4,name:'Lujo iOS/Android V2 Launch',dept:'Lujo',target:'2026-05-15',pri:'High',owner:'Both',prog:60,desc:'5-tab nav confirmed. Screens in design.'},
+  {id:5,name:'Travel — Platform Redesign Brief',dept:'Baroque Travel',target:'2026-05-30',pri:'High',owner:'Design',prog:5,desc:'Migration from Softr to SF Experience Cloud.'},
+  {id:6,name:'BSUID Migration — Hard Deadline',dept:'All Verticals',target:'2026-06-30',pri:'Urgent',owner:'Dev',prog:20,desc:'Regulatory deadline. All entities by June 30.'},
+  {id:7,name:'Aviation — Supplier Portal Design',dept:'Baroque Aviation',target:'2026-06-30',pri:'High',owner:'Design',prog:0,desc:'New portal. Brief needed first.'},
+  {id:8,name:'Access — Admin Dashboard Design Start',dept:'Baroque Access',target:'2026-07-15',pri:'High',owner:'Design',prog:0,desc:'No design exists at all.'},
+];
+var QF_DEF=[
+  {id:1,task:'Remove Intercom from all platforms',dept:'All Verticals',pri:'High',link:'',owner:'Sohail',st:'Not Started',desc:'Unused 4+ years. Remove all SDK references.'},
+  {id:2,task:'Uninstall Pardot from Salesforce',dept:'All Verticals',pri:'High',link:'',owner:'Roheen',st:'Not Started',desc:'Replaced by Marketing Cloud.'},
+  {id:3,task:'Design Aviation test login page',dept:'Baroque Aviation',pri:'Urgent',link:'https://test.baroqueaviation.com/login',owner:'Designer',st:'Not Started',desc:'Unstyled. Apply brand treatment.'},
+  {id:4,task:'Create TBO_Hotel_Code__c in Salesforce',dept:'Baroque Travel',pri:'Urgent',link:'',owner:'Sohail',st:'In Progress',desc:'276 matched records + CSV for 1,027 hotels.'},
+  {id:5,task:'Document Yachts supplier dashboard scope',dept:'Baroque Yachts',pri:'Standard',link:'',owner:'Designer',st:'Not Started',desc:'Separate build or view within admin?'},
+  {id:6,task:'Verify Salesforce MC DKIM/SPF/DMARC',dept:'All Verticals',pri:'High',link:'',owner:'Rohini',st:'Not Started',desc:'Email deliverability audit.'},
+];
+var DT_DEF=[
+  {id:1,task:'Review Yachts File 8 wireframes',dept:'Baroque Yachts',date:td(),pri:'High',owner:'Sahle',done:false},
+  {id:2,task:'Send hotel outreach templates to Sheila',dept:'Baroque Travel',date:td(),pri:'High',owner:'Sahle',done:false},
+  {id:3,task:'Review Lujo V2 prototype with Sohail',dept:'Lujo',date:td(),pri:'Medium',owner:'Sahle',done:false},
+];
+var APPR_DEF=[
+  {id:1,name:'Lujo File 8 — Guest Preference Flow',dept:'Lujo',source:'Design',link:'',details:'Review wireframes before dev handoff.',st:'pending'},
+  {id:2,name:'TBO Hotel Code CSV — 1,027 records',dept:'Baroque Travel',source:'Development',link:'',details:'Review before Salesforce upload.',st:'pending'},
+  {id:3,name:'CDA Dispute Escalation Email',dept:'Baroque Group',source:'Operations',link:'',details:'CEO sign-off required.',st:'pending'},
+];
+var PIPE_DEF=[
+  {id:1,name:'Aviation Admin/Agent Portal — Full Design',dept:'Baroque Aviation',pri:'Urgent',target:'2026-04-15',dep:'Dev live — design must catch up NOW'},
+  {id:2,name:'Lujo Guest Preference Flow (File 8)',dept:'Lujo',pri:'Urgent',target:'2026-04-22',dep:'Final file of rebuild'},
+  {id:3,name:'Yachts — File 8 + Dev Handoff',dept:'Baroque Yachts',pri:'Urgent',target:'2026-05-01',dep:'Files 1–7 complete'},
+  {id:4,name:'Lujo — Membership Tier Pages',dept:'Lujo',pri:'High',target:'2026-05-15',dep:'V2 nav locked'},
+  {id:5,name:'Travel — Platform Redesign Brief',dept:'Baroque Travel',pri:'High',target:'2026-05-30',dep:'Awaiting SF EC decision'},
+  {id:6,name:'Aviation — Supplier Portal Design',dept:'Baroque Aviation',pri:'High',target:'2026-06-30',dep:'Brief needed first'},
+  {id:7,name:'Access — Admin Dashboard Design',dept:'Baroque Access',pri:'High',target:'2026-07-15',dep:'No design exists'},
+  {id:8,name:'Lujo — Northwell Health Pages',dept:'Lujo',pri:'Standard',target:'2026-06-01',dep:'Awaiting brief'},
+  {id:9,name:'Baroque Group — Corporate Refresh',dept:'Baroque Group',pri:'Standard',target:'2026-07-01',dep:'—'},
+  {id:10,name:'Baroque Ground — Website Refresh',dept:'Baroque Ground',pri:'Standard',target:'2026-07-15',dep:'—'},
+];
+var EM_DEF=[
+  {id:1,name:'Booking Confirmation',dept:'Aviation/Yachts/Travel',type:'Booking',plat:'Salesforce MC',st:'In Progress'},
+  {id:2,name:'Charter Pre-Trip Reminder',dept:'Aviation/Yachts',type:'Reminder',plat:'Salesforce MC',st:'Not Started'},
+  {id:3,name:'Membership Welcome',dept:'Lujo',type:'Onboarding',plat:'Salesforce MC',st:'Live'},
+  {id:4,name:'Booking Status Push Notification',dept:'Lujo',type:'Push Notification',plat:'iOS/Android',st:'Live'},
+  {id:5,name:'Upsell / Cross-Sell Campaign',dept:'All Verticals',type:'Upsell',plat:'Salesforce MC',st:'Not Started'},
+  {id:6,name:'Invoice / Payment Receipt',dept:'All Verticals',type:'Confirmation',plat:'Salesforce MC',st:'In Progress'},
+  {id:7,name:'Password Reset',dept:'Lujo / Properties',type:'System',plat:'Custom',st:'Live'},
+  {id:8,name:'Hotel Partner Outreach',dept:'Baroque Travel',type:'Outreach',plat:'Salesforce MC',st:'Template Built'},
+  {id:9,name:'Yachts Newsletter',dept:'Baroque Yachts',type:'Newsletter',plat:'Salesforce MC',st:'Live'},
+  {id:10,name:'Lujo Newsletter',dept:'Lujo',type:'Newsletter',plat:'Salesforce MC',st:'Live'},
+  {id:11,name:'WhatsApp — Charter Inquiry Ack',dept:'Baroque Yachts',type:'WhatsApp',plat:'Twilio',st:'Not Started'},
+  {id:12,name:'WhatsApp — Aviation Booking Update',dept:'Baroque Aviation',type:'WhatsApp',plat:'Twilio',st:'Not Started'},
+  {id:13,name:'Lujo Tier Upgrade Nudge',dept:'Lujo',type:'Upsell',plat:'Salesforce MC',st:'Not Started'},
+];
+var ASSETS_DEF=[
+  {id:1,name:'Baroque Yachts — Summer Charter Campaign',dept:'Baroque Yachts',type:'Campaign',st:'Approved',campaign:'Summer 2026',link:'https://drive.google.com',thumb:'',notes:'Full campaign assets. Ready to post.'},
+  {id:2,name:'Lujo Brand Kit 2026',dept:'Lujo',type:'Brand Kit',st:'Approved',campaign:'Brand',link:'https://drive.google.com',thumb:'',notes:'Logo, colors, fonts, guidelines.'},
+  {id:3,name:'Aviation — Hero Video',dept:'Baroque Aviation',type:'Video',st:'Approved',campaign:'Brand',link:'https://drive.google.com',thumb:'',notes:'60s brand video. Approved for all channels.'},
+  {id:4,name:'Properties — Dubai Listings Photography',dept:'Baroque Properties',type:'Image',st:'Approved',campaign:'Q2 Listings',link:'https://drive.google.com',thumb:'',notes:'40 high-res images.'},
+  {id:5,name:'Travel — March Madness Social Posts',dept:'Baroque Travel',type:'Social Post',st:'Approved',campaign:'March Madness',link:'https://drive.google.com',thumb:'',notes:'Instagram + LinkedIn formats.'},
+  {id:6,name:'Lujo — Membership Email Template',dept:'Lujo',type:'Email Template',st:'Pending Review',campaign:'Onboarding',link:'https://drive.google.com',thumb:'',notes:'Needs final CEO approval.'},
+];
+var SOCIAL_DEF=[
+  {v:'Baroque Access',ig:'Active',li:'Partial',tt:'—',cs:'In Progress',freq:'Weekly',n:''},
+  {v:'Baroque Aviation',ig:'Active',li:'Active',tt:'—',cs:'Regular',freq:'2x/week',n:'Most consistent'},
+  {v:'Baroque Properties',ig:'Active',li:'Partial',tt:'—',cs:'Irregular',freq:'Monthly',n:'Needs strategy'},
+  {v:'Baroque Group',ig:'Inactive',li:'Active',tt:'—',cs:'No Plan',freq:'—',n:'Strategy needed'},
+  {v:'Baroque Travel',ig:'Active',li:'Inactive',tt:'—',cs:'In Progress',freq:'Weekly',n:'March Madness active'},
+  {v:'Baroque Ground',ig:'Inactive',li:'Inactive',tt:'—',cs:'No Plan',freq:'—',n:'Strategy needed'},
+  {v:'Baroque Lifestyle',ig:'Active',li:'Inactive',tt:'—',cs:'Irregular',freq:'Monthly',n:'Blog driven'},
+  {v:'Lujo',ig:'Active',li:'Partial',tt:'Active',cs:'Regular',freq:'3x/week',n:'Most active vertical'},
+];
+var FEATS=[
+  {v:'Baroque Aviation',ic:'✈️',m:[{n:'Quote Request Flow',s:'done'},{n:'Booking Management',s:'prog'},{n:'Passenger Documents',s:'prog'},{n:'Payment Flow',s:'miss'},{n:'Agent Dashboard',s:'prog'},{n:'Supplier Management',s:'miss'},{n:'WhatsApp Notifications',s:'miss'},{n:'Admin Reporting',s:'miss'}]},
+  {v:'Baroque Yachts',ic:'⛵',m:[{n:'Yacht Search & Filter',s:'done'},{n:'Yacht Detail Pages',s:'prog'},{n:'Charter Inquiry',s:'done'},{n:'Guest Preference Flow',s:'prog'},{n:'Admin Dashboard',s:'prog'},{n:'Supplier Portal',s:'miss'},{n:'Booking Management',s:'prog'},{n:'Payment Flow',s:'miss'},{n:'Availability Calendar',s:'miss'}]},
+  {v:'Baroque Properties',ic:'🏛️',m:[{n:'Property Search',s:'done'},{n:'Property Listings',s:'done'},{n:'Booking Flow',s:'done'},{n:'Owner Dashboard',s:'done'},{n:'Admin Dashboard',s:'done'},{n:'Supplier Dashboard',s:'done'},{n:'Payment (Stripe)',s:'done'},{n:'Analytics',s:'miss'}]},
+  {v:'Baroque Travel',ic:'🌍',m:[{n:'Destination Search',s:'done'},{n:'Hotel Search (TBO)',s:'miss'},{n:'Itinerary Builder',s:'miss'},{n:'Quote Request',s:'done'},{n:'Agent Dashboard',s:'miss'},{n:'Admin Interface',s:'miss'},{n:'WhatsApp Updates',s:'miss'}]},
+  {v:'Baroque Access',ic:'🔑',m:[{n:'Service Request Form',s:'done'},{n:'Concierge Messaging',s:'miss'},{n:'Member Profile',s:'miss'},{n:'Admin Dashboard',s:'miss'},{n:'Partner Portal',s:'miss'},{n:'Notifications',s:'miss'}]},
+  {v:'Lujo',ic:'💎',m:[{n:'App Onboarding',s:'done'},{n:'Membership Tier Pages',s:'prog'},{n:'Service Booking',s:'done'},{n:'Chat (Twilio)',s:'done'},{n:'Push Notifications',s:'done'},{n:'V2 Navigation',s:'prog'},{n:'Guest Preference Flow',s:'prog'},{n:'Admin Dashboard',s:'done'},{n:'Partner Dashboard',s:'done'},{n:'Payment (Stripe)',s:'done'},{n:'Northwell Pages',s:'miss'},{n:'Tier Upgrade UX',s:'miss'}]},
+];
+var REFS=[
+  {v:'Baroque Aviation',ic:'✈️',cats:[
+    {t:'Competitors',items:[{n:'VistaJet',url:'https://vistajet.com',note:'Gold standard UX'},{n:'NetJets',url:'https://netjets.com',note:'Fractional ownership'},{n:'Victor',url:'https://victor.com',note:'On-demand charter'},{n:'Wheels Up',url:'https://wheelsup.com',note:'Membership model'}]},
+    {t:'Booking UX',items:[{n:'Blade Air',url:'https://blade.com',note:'Clean seat selection'},{n:'JSX Air',url:'https://jsx.com',note:'Semi-private UX'},{n:'Surf Air',url:'https://surfair.com',note:'Subscription model'}]},
+    {t:'Design Notes',items:[{n:'Speed of quote',url:'',note:'<3 clicks to request'},{n:'Trust signals',url:'',note:'Fleet, pilot profiles'},{n:'WhatsApp visible',url:'',note:'On every page'}]},
+  ]},
+  {v:'Baroque Yachts',ic:'⛵',cats:[
+    {t:'Competitors',items:[{n:'Burgess Yachts',url:'https://burgessyachts.com',note:'Premium reference'},{n:'Fraser Yachts',url:'https://fraseryachts.com',note:'Charter + sales'},{n:'Camper & Nicholsons',url:'https://cnconnect.com',note:'Editorial luxury'}]},
+    {t:'UX Inspiration',items:[{n:'YachtCharterFleet',url:'https://yachtcharterfleet.com',note:'Search patterns'},{n:'Ocean Independence',url:'https://oceanindependence.com',note:'Full-width imagery'}]},
+    {t:'Design Notes',items:[{n:'Destination-first',url:'',note:'Lead with where, not what'},{n:'Guest preference',url:'',note:'File 8 — critical'},{n:'Light navy/cream',url:'',note:'Current direction'}]},
+  ]},
+  {v:'Baroque Travel',ic:'🌍',cats:[
+    {t:'Benchmarks',items:[{n:'Black Tomato',url:'https://blacktomato.com',note:'Bespoke UX'},{n:'Pelorus',url:'https://pelorusx.com',note:'Expedition luxury'},{n:'Kensington Tours',url:'https://kensingtontours.com',note:'Search + builder'},{n:'Abercrombie & Kent',url:'https://abercrombiekent.com',note:'Premium packages'}]},
+    {t:'Booking Flows',items:[{n:'Remote Lands',url:'https://remotelands.com',note:'Inquiry-led model'},{n:'Artisan Travel',url:'https://artisantravel.co.uk',note:'Experience-led'}]},
+    {t:'Design Notes',items:[{n:'TBO API',url:'',note:'Hotel search critical'},{n:'Admin gap',url:'',note:'Sheila team needs now'},{n:'Migration Q3',url:'',note:'SF Experience Cloud'}]},
+  ]},
+  {v:'Baroque Access',ic:'🔑',cats:[
+    {t:'Concierge Benchmarks',items:[{n:'Quintessentially',url:'https://quintessentially.com',note:'Gold standard'},{n:'Ten Group',url:'https://tengroup.com',note:'Lifestyle platform'},{n:'Pure Entertainment',url:'https://pure-entertainment.co.uk',note:'VIP access model'}]},
+    {t:'Design Notes',items:[{n:'Frictionless requests',url:'',note:'<30 second UX'},{n:'Discretion',url:'',note:'No unnecessary data'},{n:'Admin critical',url:'',note:'Nothing exists yet'}]},
+  ]},
+  {v:'Baroque Properties',ic:'🏛️',cats:[
+    {t:'Benchmarks',items:[{n:'Onefinestay',url:'https://onefinestay.com',note:'Premium rental UX'},{n:'Plum Guide',url:'https://plumguide.com',note:'Curation-first'},{n:'Luxury Retreats',url:'https://luxuryretreats.com',note:'Destination filtering'}]},
+    {t:'Design Notes',items:[{n:'Most complete',url:'',note:'Admin+supplier+client live'},{n:'Photography first',url:'',note:'Full-bleed imagery'}]},
+  ]},
+  {v:'Lujo',ic:'💎',cats:[
+    {t:'Membership Apps',items:[{n:'Inspirato',url:'https://inspirato.com',note:'Subscription luxury'},{n:'BLADE App',url:'https://blade.com',note:'Premium on-demand'},{n:'Exclusive Resorts',url:'https://exclusiveresorts.com',note:'Club membership UX'}]},
+    {t:'App UX',items:[{n:'Airbnb Luxe',url:'https://airbnb.com/luxury',note:'Luxury presentation'},{n:'Four Seasons App',url:'',note:'White glove mobile'},{n:'Rosewood App',url:'',note:'Hospitality reference'}]},
+    {t:'Design Notes',items:[{n:'5-tab nav locked',url:'',note:'Do not change'},{n:'Form-first intake',url:'',note:'Chat banner secondary'},{n:'Tier design language',url:'',note:'Explorer/Dining/Elite/Private'}]},
+  ]},
+];
+
+var S={proj:[...PROJ_DEF],ms:[...MS_DEF],qf:[...QF_DEF],dt:[...DT_DEF],appr:[...APPR_DEF],pipe:[...PIPE_DEF],em:[...EM_DEF],assets:[...ASSETS_DEF]};
+var calOff=0;
+
+// ═══════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════
+function td(){return new Date().toISOString().split('T')[0]}
+function fmt(d){if(!d)return'—';var p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0]}
+function dl(d){if(!d)return null;return Math.ceil((new Date(d)-new Date(td()))/(86400000))}
+function tc(d){var v=dl(d);if(v===null)return'';if(v<0)return'ov';if(v<=14)return'nr';return'ok'}
+function tl(d){var v=dl(d);if(v===null)return'—';if(v<0)return Math.abs(v)+'d overdue';if(v===0)return'Today';return v+'d left'}
+function pc(p){if(p>=100)return'#2A7A5A';if(p>=60)return'#C4913A';if(p>=30)return'#C47A20';return'#C04040'}
+function pb(p){return'<div class="prw"><div class="prb"><div class="prf" style="width:'+p+'%;background:'+pc(p)+'"></div></div><span class="prp">'+p+'%</span></div>'}
+function lnk(u,l,cls){return u?'<a class="lnk'+(cls?' '+cls:'')+'" href="'+u+'" target="_blank">🔗'+l+'</a>':'—'}
+function load(){try{var d=localStorage.getItem('baroque-v5');if(d)S=Object.assign({},S,JSON.parse(d));}catch(e){}}
+function persist(){try{localStorage.setItem('baroque-v5',JSON.stringify(S));}catch(e){}var t=document.getElementById('toast');if(t){t.classList.add('show');setTimeout(function(){t.classList.remove('show')},1800);}}
+function saveAll(){persist();renderAll();}
+function updateBdg(){
+  var qf=S.qf.filter(function(x){return x.st!=='Done'}).length;
+  var ap=S.appr.filter(function(x){return x.st==='pending'}).length;
+  var qfEl=document.getElementById('sb-qf');if(qfEl)qfEl.textContent=qf;
+  var apEl=document.getElementById('sb-appr');if(apEl)apEl.textContent=ap;
+  var piEl=document.getElementById('sb-pipe');if(piEl)piEl.textContent=S.pipe.length;
+  var qfOv=document.getElementById('ov-qf');if(qfOv)qfOv.textContent=qf;
+}
+
+function renderSec(id){
+  var m={overview:renderOverview,milestones:renderMS,calendar:renderCal,pipeline:renderPipe,features:renderFeat,projects:renderProj,quickfix:renderQF,daily:renderDT,approvals:renderAppr,email:renderEmails,references:renderRefs,assets:renderAssets,social:renderSocial};
+  if(m[id])m[id]();
+}
+function renderAll(){renderOverview();updateBdg();}
+
+// OVERVIEW
+function renderOverview(){
+  var el=document.getElementById('ov-ms');if(!el)return;
+  var up=S.ms.filter(function(m){return m.prog<100}).sort(function(a,b){return new Date(a.target)-new Date(b.target)}).slice(0,6);
+  var pcc={Urgent:'var(--red)',High:'var(--gold)',Standard:'var(--blue)'};
+  el.innerHTML=up.map(function(m){return'<div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--b)"><div style="width:6px;height:6px;border-radius:50%;background:'+pcc[m.pri]+';flex-shrink:0"></div><div style="flex:1"><div style="font-size:10.5px;font-weight:600;color:var(--navy)">'+m.name+'</div><div style="font-size:8.5px;color:var(--t3)">'+m.dept+'</div></div><div style="font-size:8.5px;font-family:monospace" class="ms-tgt '+tc(m.target)+'">'+fmt(m.target)+'</div><div style="font-size:8px;color:var(--t4);font-style:italic">'+tl(m.target)+'</div></div>'}).join('')||'<div style="font-size:10.5px;color:var(--t3);padding:8px 0">All milestones complete.</div>';
+}
+
+// MILESTONES
+function renderMS(){
+  var sorted=[...S.ms].sort(function(a,b){var po={Urgent:0,High:1,Standard:2};return po[a.pri]-po[b.pri]||new Date(a.target)-new Date(b.target)});
+  var grp={};sorted.forEach(function(m){var k=m.target?m.target.slice(0,7):'no-date';if(!grp[k])grp[k]=[];grp[k].push(m);});
+  var pcc={Urgent:'var(--red)',High:'var(--gold)',Standard:'var(--blue)'};
+  var html=Object.keys(grp).sort().map(function(k){
+    var lbl=k==='no-date'?'No Date':new Date(k+'-01').toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+    var rows=grp[k].map(function(m){
+      var canEdit=currentUser&&(currentUser.role==='Admin'||currentUser.role==='Designer');
+      var actions=canEdit?'<div style="display:flex;gap:4px;margin-top:6px"><button class="btn sm" onclick="editMS('+m.id+')">Edit</button><button class="btn sm" onclick="pProg('+m.id+')">%</button><button class="btn sm dan" onclick="delMS('+m.id+')">Remove</button></div>':'';
+      return'<div class="ms-card"><div class="ms-left" style="background:'+pcc[m.pri]+'"></div><div class="ms-info"><div style="font-size:11px;font-weight:600;color:var(--navy)">'+m.name+'</div><div style="font-size:8.5px;color:var(--t3)">'+m.dept+'</div><div style="margin-top:4px"><span class="bdg '+(m.pri==='Urgent'?'bu':m.pri==='High'?'bp':'bn')+'">'+m.pri+'</span></div></div><div class="ms-right"><div class="ms-track"><div class="ms-fill" style="width:'+m.prog+'%;background:'+pc(m.prog)+'"></div></div><div style="display:flex;align-items:center;justify-content:space-between;font-size:8.5px;color:var(--t3);margin-top:3px"><span class="ms-tgt '+tc(m.target)+'" style="font-family:monospace">🎯 '+fmt(m.target)+' · '+tl(m.target)+'</span><span style="font-size:8.5px;padding:1px 5px;border-radius:10px;background:var(--crm);border:1px solid var(--b)">'+m.owner+'</span><span style="font-size:10px;font-weight:600;color:'+pc(m.prog)+'">'+m.prog+'%</span></div>'+(m.desc?'<div style="font-size:9.5px;color:var(--t3);margin-top:3px;line-height:1.4">'+m.desc+'</div>':'')+actions+'</div></div>';
+    }).join('');
+    return'<div style="margin-bottom:18px"><div class="cat">'+lbl+'</div>'+rows+'</div>';
+  }).join('');
+  document.getElementById('ms-container').innerHTML=html||'<div style="text-align:center;padding:20px;color:var(--t3)">No milestones. Add one above.</div>';
+}
+function pProg(id){var m=S.ms.find(function(x){return x.id===id});if(!m)return;var v=prompt('Update % for "'+m.name+'" (0-100):',m.prog);if(v===null)return;m.prog=Math.min(100,Math.max(0,parseInt(v)||0));persist();renderMS();}
+function delMS(id){if(!confirm('Remove milestone?'))return;S.ms=S.ms.filter(function(x){return x.id!==id});persist();renderMS();}
+function editMS(id){var m=S.ms.find(function(x){return x.id===id});if(!m)return;document.getElementById('msm-id').value=id;document.getElementById('msm-name').value=m.name;document.getElementById('msm-dept').value=m.dept;document.getElementById('msm-target').value=m.target||'';document.getElementById('msm-pri').value=m.pri;document.getElementById('msm-owner').value=m.owner;document.getElementById('msm-prog').value=m.prog;document.getElementById('msm-desc').value=m.desc||'';openM('ms-modal');}
+function saveMilestone(){var id=document.getElementById('msm-id').value;var obj={id:id?parseInt(id):Date.now(),name:document.getElementById('msm-name').value,dept:document.getElementById('msm-dept').value,target:document.getElementById('msm-target').value,pri:document.getElementById('msm-pri').value,owner:document.getElementById('msm-owner').value,prog:parseInt(document.getElementById('msm-prog').value)||0,desc:document.getElementById('msm-desc').value};if(id){var i=S.ms.findIndex(function(x){return x.id===parseInt(id)});if(i>-1)S.ms[i]=obj;}else S.ms.push(obj);document.getElementById('msm-id').value='';closeM('ms-modal');persist();renderMS();renderCal();}
+
+// CALENDAR
+function renderCal(){
+  var now=new Date(),d=new Date(now.getFullYear(),now.getMonth()+calOff,1);
+  var yr=d.getFullYear(),mo=d.getMonth();
+  document.getElementById('cal-lbl').textContent=d.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+  document.getElementById('cal-dn').innerHTML=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(function(n){return'<div class="cal-dn">'+n+'</div>'}).join('');
+  var first=(new Date(yr,mo,1).getDay()+6)%7,dim=new Date(yr,mo+1,0).getDate();
+  var emap={};
+  S.ms.forEach(function(m){if(!m.target)return;var ed=new Date(m.target);if(ed.getFullYear()===yr&&ed.getMonth()===mo){var day=ed.getDate();if(!emap[day])emap[day]=[];emap[day].push({label:m.name,cls:m.pri==='Urgent'?'cev-u':m.pri==='High'?'cev-h':'cev-s'});}});
+  S.pipe.forEach(function(p){if(!p.target)return;var ed=new Date(p.target);if(ed.getFullYear()===yr&&ed.getMonth()===mo){var day=ed.getDate();if(!emap[day])emap[day]=[];emap[day].push({label:'⚡ '+p.name,cls:'cev-m'});}});
+  var cells='';
+  for(var i=0;i<first;i++)cells+='<div class="cal-cell empty"></div>';
+  var td2=now.getDate(),tm=now.getMonth(),ty=now.getFullYear();
+  for(var day=1;day<=dim;day++){var isT=day===td2&&mo===tm&&yr===ty;var evl=(emap[day]||[]).slice(0,3).map(function(e){return'<div class="cal-ev '+e.cls+'" title="'+e.label+'">'+e.label+'</div>'}).join('');var more=(emap[day]||[]).length>3?'<div style="font-size:6px;color:var(--t3)">+'+(emap[day].length-3)+'</div>':'';cells+='<div class="cal-cell'+(isT?' today':'')+'"><div class="cal-n">'+day+'</div>'+evl+more+'</div>';}
+  document.getElementById('cal-cells').innerHTML=cells;
+}
+function calP(){calOff--;renderCal();}function calN(){calOff++;renderCal();}function calT(){calOff=0;renderCal();}
+
+// PIPELINE
+function renderPipe(){
+  var po={Urgent:0,High:1,Standard:2};var grp={Urgent:[],High:[],Standard:[]};
+  [...S.pipe].sort(function(a,b){return po[a.pri]-po[b.pri]||new Date(a.target)-new Date(b.target)}).forEach(function(p){grp[p.pri].push(p)});
+  var pcls={Urgent:'bu',High:'bp',Standard:'bn'};var html='';
+  var canEdit=currentUser&&(currentUser.role==='Admin'||currentUser.role==='Designer');
+  ['Urgent','High','Standard'].forEach(function(pri){
+    if(!grp[pri].length)return;
+    var ico=pri==='Urgent'?'🔴':pri==='High'?'🟡':'⚪';
+    html+='<div class="cat">'+ico+' '+pri+' Priority</div>';
+    html+=grp[pri].map(function(p,i){return'<div class="pipe-r"><span style="font-family:monospace;font-size:9px;color:var(--t3);width:18px;flex-shrink:0">'+(i+1)+'</span><div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--navy)">'+p.name+'</div><div style="font-size:9px;color:var(--t3);margin-top:1px">'+p.dep+'</div></div><span style="font-size:8.5px;padding:2px 6px;border-radius:10px;background:var(--crm);border:1px solid var(--b);color:var(--t2)">'+p.dept+'</span><span class="ms-tgt '+tc(p.target)+'" style="font-family:monospace;font-size:8.5px">'+fmt(p.target)+'</span><span style="font-size:8.5px;color:var(--t4);font-style:italic">'+tl(p.target)+'</span><span class="bdg '+pcls[p.pri]+'">'+p.pri+'</span>'+(canEdit?'<button class="btn sm dan" onclick="delPipe('+p.id+')">✕</button>':'')+'</div>';}).join('');
+  });
+  document.getElementById('pipe-container').innerHTML=html;
+}
+function delPipe(id){S.pipe=S.pipe.filter(function(x){return x.id!==id});persist();renderPipe();updateBdg();}
+function savePipeline(){S.pipe.push({id:Date.now(),name:document.getElementById('pim-name').value,dept:document.getElementById('pim-dept').value,pri:document.getElementById('pim-pri').value,target:document.getElementById('pim-target').value,dep:document.getElementById('pim-dep').value});closeM('pipe-modal');persist();renderPipe();updateBdg();}
+
+// FEATURES
+function renderFeat(){
+  var fv=document.getElementById('feat-f').value;
+  var data=fv?FEATS.filter(function(x){return x.v===fv}):FEATS;
+  document.getElementById('feat-container').innerHTML=data.map(function(v){
+    var tot=v.m.length,done=v.m.filter(function(m){return m.s==='done'}).length,prog=v.m.filter(function(m){return m.s==='prog'}).length,miss=v.m.filter(function(m){return m.s==='miss'}).length;
+    var pct=Math.round((done/tot)*100);
+    return'<div class="tw" style="margin-bottom:10px;overflow:hidden"><div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--navy)"><div style="width:28px;height:28px;border-radius:6px;background:rgba(196,145,58,.14);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">'+v.ic+'</div><div style="flex:1"><div style="font-family:\'Cormorant Garant\',serif;font-size:16px;font-weight:400;color:#F5EFE3">'+v.v+'</div><div style="font-size:8px;color:rgba(255,255,255,.3);letter-spacing:.08em;text-transform:uppercase">'+done+' designed · '+prog+' in progress · '+miss+' missing</div></div>'+pb(pct)+'<span style="font-size:10px;font-weight:600;color:'+pc(pct)+';min-width:28px">'+pct+'%</span></div><div style="padding:10px 13px;display:flex;flex-wrap:wrap;gap:4px">'+v.m.map(function(m){var cls=m.s==='done'?'fm-done':m.s==='prog'?'fm-prog':'fm-miss';var dc=m.s==='done'?'dot-g':m.s==='prog'?'dot-a':'dot-r';return'<span class="fm-tag '+cls+'"><span class="dot '+dc+'"></span>'+m.n+'</span>'}).join('')+'</div><div style="padding:0 13px 10px;display:flex;gap:12px;font-size:9px;color:var(--t3)"><span><span class="dot dot-g"></span> Designed: '+done+'</span><span><span class="dot dot-a"></span> In Progress: '+prog+'</span><span><span class="dot dot-r"></span> Missing: '+miss+'</span></div></div>';
+  }).join('');
+}
+
+// PROJECTS
+function renderProj(){
+  var ft=document.getElementById('f-type')?.value||'',fd=document.getElementById('f-dept')?.value||'',fs=document.getElementById('f-status')?.value||'',fa=document.getElementById('f-align')?.value||'',fq=(document.getElementById('f-search')?.value||'').toLowerCase();
+  var rows=S.proj.filter(function(p){if(ft&&p.type!==ft)return false;if(fd&&p.dept!==fd)return false;if(fs&&p.status!==fs)return false;if(fa&&p.align!==fa)return false;if(fq&&!(p.comp+p.dept+p.stack+p.notes).toLowerCase().includes(fq))return false;return true;});
+  var pct=document.getElementById('proj-ct');if(pct)pct.textContent=rows.length+' projects';
+  var stm={'Live':'bl','In Progress':'bp','In Design':'bdes','In Development':'bplan','Not Started':'bn','Planned':'bplan'};
+  var afl=function(a){return a==='dev-ahead'?'<span class="fl fl-r">🔴 Dev Ahead</span>':a==='design-ahead'?'<span class="fl fl-g">✅ Ahead</span>':'<span class="fl fl-a">🟡 Aligned</span>';};
+  var phcls={'Discovery':'ph-dis','In Design':'ph-des','In Development':'ph-dev','Live':'ph-live','QA':'ph-dev'};
+  var itcls={'Client-facing':'it-cl','Admin':'it-ad','Agent':'it-ad','Partner/Supplier':'it-pa','Mobile App':'bdes','Backend':'bn'};
+  var canEdit=currentUser&&(currentUser.role==='Admin'||currentUser.role==='Designer');
+  var tb=document.getElementById('proj-tbody');
+  if(tb)tb.innerHTML=rows.map(function(p){return'<tr><td><span class="'+(itcls[p.itype]||'bn')+'" style="font-size:8px">'+p.itype+'</span></td><td class="str">'+p.comp+'</td><td style="font-size:9.5px">'+p.dept+'</td><td style="font-size:9px;font-family:monospace">'+p.stack+'</td><td>'+lnk(p.live,'live')+'</td><td>'+lnk(p.test,'test')+'</td><td>'+lnk(p.figma,'figma','fig')+'</td><td>'+pb(p.dpct)+'</td><td>'+pb(p.devpct)+'</td><td>'+afl(p.align)+'</td><td><span class="phase '+(phcls[p.phase]||'ph-dis')+'">'+p.phase+'</span></td><td><span class="bdg '+(stm[p.status]||'bn')+'">'+p.status+'</span></td><td style="font-size:9.5px">'+p.owner+'</td><td style="font-family:monospace;font-size:8.5px" class="ms-tgt '+tc(p.target)+'">'+fmt(p.target)+'</td><td><div style="display:flex;gap:3px">'+(canEdit?'<button class="btn sm" onclick="editProj('+p.id+')">Edit</button><button class="btn sm" onclick="subAppr('+p.id+')">→</button>':'<span style="font-size:9px;color:var(--t3)">View only</span>')+'</div></td></tr>';}).join('')||'<tr><td colspan="15" style="text-align:center;padding:16px;color:var(--t3)">No projects match filters.</td></tr>';
+}
+function editProj(id){var p=S.proj.find(function(x){return x.id===id});if(!p)return;document.getElementById('pm-id').value=id;['comp','stack','live','test','figma','notes','owner','target'].forEach(function(f){var el=document.getElementById('pm-'+f);if(el)el.value=p[f]||'';});['type','itype','dept','phase','status','pri'].forEach(function(f){var el=document.getElementById('pm-'+f);if(el)el.value=p[f]||'';});document.getElementById('pm-dpct').value=p.dpct;document.getElementById('pm-devpct').value=p.devpct;openM('proj-modal');}
+function saveProject(){var id=document.getElementById('pm-id').value;var dp=parseInt(document.getElementById('pm-dpct').value)||0;var dv=parseInt(document.getElementById('pm-devpct').value)||0;var align=dp>dv?'design-ahead':dv>dp?'dev-ahead':'aligned';var obj={id:id?parseInt(id):Date.now(),type:document.getElementById('pm-type').value,itype:document.getElementById('pm-itype').value,comp:document.getElementById('pm-comp').value,dept:document.getElementById('pm-dept').value,stack:document.getElementById('pm-stack').value,owner:document.getElementById('pm-owner').value,phase:document.getElementById('pm-phase').value,live:document.getElementById('pm-live').value,test:document.getElementById('pm-test').value,figma:document.getElementById('pm-figma').value,dpct:dp,devpct:dv,align:align,status:document.getElementById('pm-status').value,pri:document.getElementById('pm-pri').value,target:document.getElementById('pm-target').value,notes:document.getElementById('pm-notes').value};if(id){var i=S.proj.findIndex(function(x){return x.id===parseInt(id)});if(i>-1)S.proj[i]=obj;}else S.proj.push(obj);document.getElementById('pm-id').value='';closeM('proj-modal');persist();renderProj();}
+function subAppr(id){var p=S.proj.find(function(x){return x.id===id});if(!p)return;S.appr.push({id:Date.now(),name:p.comp+' — '+p.dept,dept:p.dept,source:'Projects',link:p.live||p.test||'',details:'Phase: '+p.phase+' | Design: '+p.dpct+'% | Dev: '+p.devpct+'%',st:'pending'});persist();alert('Submitted for approval ✓');updateBdg();}
+
+// QUICK FIX
+function renderQF(){
+  var fd=document.getElementById('qf-fd')?.value||'',fp=document.getElementById('qf-fp')?.value||'',fs=document.getElementById('qf-fs')?.value||'',fq=(document.getElementById('qf-fq')?.value||'').toLowerCase();
+  var items=S.qf.filter(function(q){if(fd&&q.dept!==fd)return false;if(fp&&q.pri!==fp)return false;if(fs&&q.st!==fs)return false;if(fq&&!(q.task+q.dept+q.desc).toLowerCase().includes(fq))return false;return true;});
+  var pcc={Urgent:'bu',High:'bp',Standard:'bn'};
+  var ql=document.getElementById('qf-list');
+  if(ql)ql.innerHTML=items.map(function(q){return'<div class="qfr"><div class="qfcb '+(q.st==='Done'?'chk':'')+'" onclick="toggleQF('+q.id+')">'+(q.st==='Done'?'✓':'')+'</div><div style="flex:1"><div style="font-size:11.5px;font-weight:500;color:var(--navy);'+(q.st==='Done'?'text-decoration:line-through;color:var(--t3)':'')+'"">'+q.task+'</div>'+(q.desc?'<div style="font-size:9px;color:var(--t3);margin-top:1px">'+q.desc+'</div>':'')+'</div><span style="font-size:8.5px;padding:2px 5px;border-radius:10px;background:var(--crm);border:1px solid var(--b);color:var(--t2)">'+q.dept+'</span>'+(q.owner?'<span style="font-size:9px;color:var(--t3)">→ '+q.owner+'</span>':'')+(q.link?lnk(q.link,'🔗'):'')+'<span class="bdg '+pcc[q.pri]+'">'+q.pri+'</span><select style="font-size:9.5px;padding:2px 5px;border:1px solid var(--b);border-radius:4px;background:var(--cream)" onchange="setQFSt('+q.id+',this.value)"><option '+(q.st==='Not Started'?'selected':'')+'>Not Started</option><option '+(q.st==='In Progress'?'selected':'')+'>In Progress</option><option '+(q.st==='Done'?'selected':'')+'>Done</option></select><button class="btn sm dan" onclick="delQF('+q.id+')">✕</button></div>';}).join('')||'<div style="text-align:center;padding:16px;color:var(--t3)">No items match filters.</div>';
+  updateBdg();
+}
+function toggleQF(id){var q=S.qf.find(function(x){return x.id===id});if(q){q.st=q.st==='Done'?'Not Started':'Done';persist();renderQF();}}
+function setQFSt(id,v){var q=S.qf.find(function(x){return x.id===id});if(q){q.st=v;persist();renderQF();}}
+function delQF(id){S.qf=S.qf.filter(function(x){return x.id!==id});persist();renderQF();}
+function saveQF(){var id=document.getElementById('qfm-id')?.value;var obj={id:id?parseInt(id):Date.now(),task:document.getElementById('qfm-task').value,dept:document.getElementById('qfm-dept').value,pri:document.getElementById('qfm-pri').value,owner:document.getElementById('qfm-owner').value,st:document.getElementById('qfm-st').value,desc:document.getElementById('qfm-desc').value,link:''};if(id){var i=S.qf.findIndex(function(x){return x.id===parseInt(id)});if(i>-1)S.qf[i]=obj;}else S.qf.push(obj);if(document.getElementById('qfm-id'))document.getElementById('qfm-id').value='';closeM('qf-modal');persist();renderQF();}
+
+// DAILY
+function renderDT(){
+  var fp=document.getElementById('dt-fp')?.value||'',fq=(document.getElementById('dt-fq')?.value||'').toLowerCase();
+  var el=document.getElementById('dt-lbl');if(el)el.textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  var pdc={High:'var(--red)',Medium:'var(--amber)',Low:'var(--t3)'};
+  var items=S.dt.filter(function(t){if(fp&&t.pri!==fp)return false;if(fq&&!(t.task+t.dept).toLowerCase().includes(fq))return false;return true;});
+  var dl2=document.getElementById('dt-list');
+  if(dl2)dl2.innerHTML=items.map(function(t){return'<div class="qfr"><div class="qfcb round '+(t.done?'chk':'')+'" onclick="toggleDT('+t.id+')">'+(t.done?'✓':'')+'</div><div style="flex:1"><div style="font-size:11.5px;font-weight:500;color:var(--navy);'+(t.done?'text-decoration:line-through;color:var(--t3)':'')+'"">'+t.task+'</div></div><span style="font-size:8.5px;padding:2px 5px;border-radius:10px;background:var(--crm);border:1px solid var(--b);color:var(--t2)">'+t.dept+'</span>'+(t.owner?'<span style="font-size:9px;color:var(--t3)">→ '+t.owner+'</span>':'')+'<div style="width:6px;height:6px;border-radius:50%;background:'+pdc[t.pri]+'" title="'+t.pri+'"></div><span style="font-family:monospace;font-size:8.5px;color:var(--t3)">'+fmt(t.date)+'</span><button class="btn sm dan" onclick="delDT('+t.id+')">✕</button></div>';}).join('')||'<div style="text-align:center;padding:16px;color:var(--t3)">No tasks. Add one above.</div>';
+}
+function toggleDT(id){var t=S.dt.find(function(x){return x.id===id});if(t){t.done=!t.done;persist();renderDT();}}
+function delDT(id){S.dt=S.dt.filter(function(x){return x.id!==id});persist();renderDT();}
+function saveDT(){S.dt.unshift({id:Date.now(),task:document.getElementById('dtm-task').value,dept:document.getElementById('dtm-dept').value,date:document.getElementById('dtm-date').value||td(),pri:document.getElementById('dtm-pri').value,owner:document.getElementById('dtm-owner').value,done:false});closeM('dt-modal');persist();renderDT();}
+
+// APPROVALS
+function renderAppr(){
+  var pend=S.appr.filter(function(x){return x.st==='pending'}),appr=S.appr.filter(function(x){return x.st==='approved'}),rej=S.appr.filter(function(x){return x.st==='rejected'});
+  var cp=document.getElementById('cnt-p'),ca=document.getElementById('cnt-a'),cr=document.getElementById('cnt-r');
+  if(cp)cp.textContent=pend.length;if(ca)ca.textContent=appr.length;if(cr)cr.textContent=rej.length;
+  var isAdmin=currentUser&&currentUser.role==='Admin';
+  var card=function(a,show){return'<div class="appr-card"><div style="font-size:11px;font-weight:600;color:var(--navy);margin-bottom:1px">'+a.name+'</div><div style="font-size:8.5px;color:var(--t3);margin-bottom:5px">'+a.dept+' · '+a.source+'</div>'+(a.details?'<div style="font-size:9.5px;color:var(--t2);margin-bottom:6px;line-height:1.4">'+a.details+'</div>':'')+(show&&isAdmin?'<div style="display:flex;gap:4px"><button class="btn sm" onclick="setA('+a.id+',\'approved\')" style="color:var(--green);border-color:rgba(42,122,90,.3)">✓ Approve</button><button class="btn sm" onclick="setA('+a.id+',\'rejected\')" style="color:var(--red);border-color:rgba(192,64,64,.3)">✕ Reject</button></div>':show?'<span style="font-size:8.5px;color:var(--t3);font-style:italic">Pending admin review</span>':'<span class="bdg '+(a.st==='approved'?'bl':'bu')+'">'+(a.st==='approved'?'Approved':'Rejected')+'</span>')+'</div>';};
+  var pp=document.getElementById('appr-p'),pa=document.getElementById('appr-a'),pr=document.getElementById('appr-r');
+  if(pp)pp.innerHTML=pend.map(function(a){return card(a,true)}).join('')||'<div style="font-size:10px;color:var(--t3);text-align:center;padding:12px">Nothing pending.</div>';
+  if(pa)pa.innerHTML=appr.map(function(a){return card(a,false)}).join('')||'<div style="font-size:10px;color:var(--t3);text-align:center;padding:12px">Nothing approved.</div>';
+  if(pr)pr.innerHTML=rej.map(function(a){return card(a,false)}).join('')||'<div style="font-size:10px;color:var(--t3);text-align:center;padding:12px">Nothing rejected.</div>';
+  updateBdg();
+}
+function setA(id,st){var a=S.appr.find(function(x){return x.id===id});if(a){a.st=st;persist();renderAppr();}}
+function saveApproval(){S.appr.push({id:Date.now(),name:document.getElementById('am-name').value,dept:document.getElementById('am-dept').value,source:document.getElementById('am-src').value,link:document.getElementById('am-link').value,details:document.getElementById('am-details').value,st:'pending'});closeM('appr-modal');persist();renderAppr();updateBdg();}
+
+// EMAIL
+function renderEmails(){
+  var stm={'Live':'bl','In Progress':'bp','Not Started':'bn','Template Built':'bn'};
+  var byT={};S.em.forEach(function(e){if(!byT[e.type])byT[e.type]=[];byT[e.type].push(e);});
+  var html='';
+  Object.keys(byT).forEach(function(t){html+='<div class="cat">'+t+'</div><div class="tw" style="margin-bottom:8px"><table><thead><tr><th>Template</th><th>Vertical</th><th>Platform</th><th>Status</th></tr></thead><tbody>'+byT[t].map(function(e){return'<tr><td class="str">'+e.name+'</td><td>'+e.dept+'</td><td style="font-size:9px;font-family:monospace">'+e.plat+'</td><td><span class="bdg '+(stm[e.st]||'bn')+'">'+e.st+'</span></td></tr>'}).join('')+'</tbody></table></div>';});
+  var ec=document.getElementById('em-container');if(ec)ec.innerHTML=html;
+}
+function saveEmail(){S.em.push({id:Date.now(),name:document.getElementById('emm-name').value,dept:document.getElementById('emm-dept').value,type:document.getElementById('emm-type').value,plat:document.getElementById('emm-plat').value,st:document.getElementById('emm-st').value});closeM('em-modal');persist();renderEmails();}
+
+// REFERENCES
+function renderRefs(){
+  var html=REFS.map(function(v){
+    var cats=v.cats.map(function(c){return'<div class="ref-box"><div class="ref-box-title">'+c.t+'</div>'+c.items.map(function(it){return'<div class="ref-row"><div><span style="font-size:10px;font-weight:500;color:var(--navy)">'+it.n+'</span><br><small>'+it.note+'</small></div>'+(it.url?lnk(it.url,'→'):'')+'</div>'}).join('')+'</div>'}).join('');
+    return'<div class="ref-card"><h4>'+v.ic+' '+v.v+'</h4><div class="ref-grid">'+cats+'</div></div>';
+  }).join('');
+  var rc=document.getElementById('ref-container');if(rc)rc.innerHTML=html;
+}
+
+// ASSETS
+function renderAssets(){
+  var fd=document.getElementById('ast-fd')?.value||'',ft=document.getElementById('ast-ft')?.value||'',fs=document.getElementById('ast-fs')?.value||'',fq=(document.getElementById('ast-fq')?.value||'').toLowerCase();
+  var items=S.assets.filter(function(a){if(fd&&a.dept!==fd)return false;if(ft&&a.type!==ft)return false;if(fs&&a.st!==fs)return false;if(fq&&!(a.name+a.dept+a.campaign+a.notes).toLowerCase().includes(fq))return false;return true;});
+  var typIc={Image:'🖼️',Video:'🎬',Campaign:'📢',Brand:'🎨','Brand Kit':'🎨','Email Template':'📧','Social Post':'📱'};
+  var typBg={Image:'#EEF3FF',Video:'#F5EEFF',Campaign:'#EDF7F2','Brand Kit':'#FDF5E8','Email Template':'#E8F5F5','Social Post':'#FDF0F0'};
+  var ag=document.getElementById('asset-grid');
+  if(ag)ag.innerHTML=items.map(function(a){return'<div class="asset-card"><div class="asset-thumb" style="background:'+(typBg[a.type]||'var(--crm)')+'"><span style="font-size:40px">'+(typIc[a.type]||'📄')+'</span></div><div class="asset-body"><div class="asset-name">'+a.name+'</div><div class="asset-meta">'+a.dept+' · '+a.type+(a.campaign?' · '+a.campaign:'')+'</div>'+(a.notes?'<div style="font-size:9.5px;color:var(--t3);margin-bottom:8px;line-height:1.4">'+a.notes+'</div>':'')+'<div class="asset-actions"><span class="bdg '+(a.st==='Approved'?'bl':'bp')+'">'+a.st+'</span>'+lnk(a.link,'Open →')+'</div></div></div>';}).join('')||'<div style="text-align:center;padding:30px;color:var(--t3);grid-column:1/-1">No assets match filters. Add one above.</div>';
+}
+function saveAsset(){S.assets.push({id:Date.now(),name:document.getElementById('astm-name').value,dept:document.getElementById('astm-dept').value,type:document.getElementById('astm-type').value,st:document.getElementById('astm-st').value,campaign:document.getElementById('astm-campaign').value,link:document.getElementById('astm-link').value,thumb:document.getElementById('astm-thumb').value,notes:document.getElementById('astm-notes').value});closeM('asset-modal');persist();renderAssets();}
+
+// SOCIAL
+function renderSocial(){
+  var sb=function(s){if(['Active','Regular'].includes(s))return'<span class="bdg bl">'+s+'</span>';if(['Partial','In Progress','Irregular'].includes(s))return'<span class="bdg bp">'+s+'</span>';return'<span class="bdg bn">'+s+'</span>';};
+  var st=document.getElementById('social-tbody');
+  if(st)st.innerHTML=SOCIAL_DEF.map(function(s){return'<tr><td class="str">'+s.v+'</td><td>'+sb(s.ig)+'</td><td>'+sb(s.li)+'</td><td>'+sb(s.tt)+'</td><td>'+sb(s.cs)+'</td><td style="font-size:9.5px;font-family:monospace">'+s.freq+'</td><td style="font-size:9.5px;color:var(--t3)">'+s.n+'</td></tr>'}).join('');
+}
+
+// MODALS
+function openM(id){document.getElementById(id).classList.add('open');}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-ov').forEach(function(m){m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('open');});});
+
+// CSV EXPORT
+function exportCSV(){var h=['Type','Interface','Component','Vertical','Stack','Live','Test','Figma','Design%','Dev%','Alignment','Phase','Status','Owner','Target','Priority','Notes'];var rows=S.proj.map(function(p){return[p.type,p.itype,p.comp,p.dept,p.stack,p.live||'',p.test||'',p.figma||'',p.dpct,p.devpct,p.align,p.phase,p.status,p.owner||'',p.target||'',p.pri,p.notes||''].map(function(v){return'"'+String(v).replace(/"/g,'""')+'"'}).join(',')});var csv=[h.join(','),...rows].join('\n');var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='baroque-projects-'+td()+'.csv';a.click();}
+
+// ═══════════════════════════════════
+// INIT
+// ═══════════════════════════════════
+window.addEventListener('DOMContentLoaded',function(){
+  // Check session
+  var saved=sessionStorage.getItem('bq-user');
+  if(saved){try{currentUser=JSON.parse(saved);initApp();}catch(e){}}
+  // Date defaults
+  var t=td();
+  ['msm-target','pm-target','dtm-date','pim-target'].forEach(function(id){var el=document.getElementById(id);if(el&&el.type==='date')el.value=t;});
+  // Auto-save
+  setInterval(function(){if(currentUser)persist();},300000);
+});
+</script>
+</body>
+</html>
