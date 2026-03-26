@@ -476,16 +476,10 @@ function ensureFields(r){
   if(!r.target)r.target='';
   r.files.forEach(f=>{if(!f.approval)f.approval='Pending Review';});
 }
-// === CLOUD SYNC via GitHub Gist ===
-const GIST_ID='65e01ee810e08fb4f5a9b306d653383a';
-const GIST_FILE='baroque-dashboard-data.json';
-let _saving=false;
+// === STORAGE ===
 let _hasUnsaved=false;
 
 function migrateQF(){D.quickfix.forEach(r=>{if(!r.files)r.files=[];if(!r.priority)r.priority='Standard';r.files.forEach(f=>{if(!f.approval)f.approval='Pending Review';});})}
-
-function getToken(){return localStorage.getItem('bq_gh_token')||'';}
-function setToken(t){localStorage.setItem('bq_gh_token',t);}
 
 function prepareData(){
   D.projects.forEach(ensureFields);
@@ -496,125 +490,61 @@ function prepareData(){
 }
 
 function load(){
-  // 1. Load from localStorage (always works, instant)
   const s=localStorage.getItem('bq_dash_v13')||localStorage.getItem('bq_dash_v12')||localStorage.getItem('bq_dash_v8');
   if(s){D=JSON.parse(s);prepareData();}
   else{D={projects:defProjects(),quickfix:[],daily:[],customCats:[]};}
   localStorage.setItem('bq_dash_v13',JSON.stringify(D));
-
-  // 2. Check if token exists for cloud
-  if(getToken()){cloudLoad();}
-  else{updateSyncStatus('no-token');}
+  updateSyncStatus('ready');
 }
 
 function markChanged(){_hasUnsaved=true;updateSyncStatus('unsaved');}
 
-// Save to localStorage + cloud
-async function save(){
-  // Always save locally
+function save(){
   localStorage.setItem('bq_dash_v13',JSON.stringify(D));
   _hasUnsaved=false;
-
-  // Try cloud if token exists
-  const token=getToken();
-  if(!token){
-    toast('Saved locally');
-    updateSyncStatus('no-token');
-    return;
-  }
-
-  if(_saving)return;
-  _saving=true;
-  updateSyncStatus('saving');
-  try{
-    const res=await fetch('https://api.github.com/gists/'+GIST_ID,{
-      method:'PATCH',
-      headers:{'Authorization':'token '+token,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
-      body:JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(D)}}})
-    });
-    if(res.ok){
-      updateSyncStatus('saved');
-      toast('Saved to cloud');
-    } else {
-      const err=await res.json().catch(()=>({}));
-      if(res.status===401){
-        updateSyncStatus('bad-token');
-        toast('Token expired — click Set Token in sidebar');
-      } else {
-        updateSyncStatus('error');
-        toast('Cloud error: '+(err.message||res.status)+' — saved locally');
-      }
-    }
-  }catch(e){
-    updateSyncStatus('error');
-    toast('Network error — saved locally');
-  }
-  _saving=false;
+  updateSyncStatus('saved');
+  toast('Saved');
 }
 
-// Load from cloud (public gist = no auth needed for read)
-async function cloudLoad(){
-  try{
-    updateSyncStatus('loading');
-    const headers={'Accept':'application/vnd.github.v3+json'};
-    const token=getToken();
-    if(token)headers['Authorization']='token '+token;
+function exportData(){
+  const blob=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='baroque-dashboard-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  toast('Backup downloaded');
+}
 
-    const res=await fetch('https://api.github.com/gists/'+GIST_ID,{headers});
-    if(!res.ok){
-      updateSyncStatus(token?'ready':'no-token');
-      return;
-    }
-    const gist=await res.json();
-    const file=gist.files&&gist.files[GIST_FILE];
-    if(!file||!file.content){
-      // Gist exists but file is empty — first time, push local data to cloud
-      updateSyncStatus('ready');
-      return;
-    }
-    const cloud=JSON.parse(file.content);
-    if(cloud&&cloud.projects&&cloud.projects.length>0){
-      // Cloud has data — use it
-      D=cloud;prepareData();
-      localStorage.setItem('bq_dash_v13',JSON.stringify(D));
-      render();
-    }
-    updateSyncStatus('ready');
-  }catch(e){
-    updateSyncStatus(getToken()?'ready':'no-token');
-  }
+function importData(){
+  const input=document.createElement('input');input.type='file';input.accept='.json';
+  input.onchange=function(){
+    const file=input.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=function(){
+      try{
+        const imported=JSON.parse(reader.result);
+        if(!imported.projects){toast('Invalid file');return;}
+        D=imported;prepareData();
+        localStorage.setItem('bq_dash_v13',JSON.stringify(D));
+        render();
+        toast('Data restored from backup');
+        updateSyncStatus('saved');
+      }catch(e){toast('Error reading file');}
+    };
+    reader.readAsText(file);
+  };
+  input.click();
 }
 
 function updateSyncStatus(st){
   const el=document.getElementById('syncStatus');if(!el)return;
-  const labels={
-    'saving':'Saving to cloud...',
-    'saved':'Saved to cloud',
-    'ready':'Cloud connected',
-    'loading':'Loading from cloud...',
-    'error':'Cloud error — saved locally',
-    'unsaved':'Unsaved changes',
-    'no-token':'Local mode',
-    'bad-token':'Token expired'
-  };
-  const colors={
-    'saving':'var(--warning)','saved':'var(--success)','ready':'var(--success)',
-    'loading':'var(--info)','error':'var(--danger)','unsaved':'var(--warning)',
-    'no-token':'var(--text-muted)','bad-token':'var(--danger)'
-  };
-  const needsToken=st==='no-token'||st==='bad-token';
-  const tokenLink=needsToken?'<br><a href="#" onclick="promptToken();return false" style="color:var(--gold);font-size:9px;text-decoration:underline">Connect GitHub for cloud sync</a>':'';
-  el.innerHTML='<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+(colors[st]||'var(--text-muted)')+';margin-right:6px;vertical-align:middle"></span>'+(labels[st]||st)+tokenLink;
-}
-
-function promptToken(){
-  const t=prompt('To enable cloud sync, you need a GitHub Personal Access Token.\n\n1. Go to: github.com/settings/tokens\n2. Click "Generate new token (classic)"\n3. Check only "gist" scope\n4. Copy the token and paste below:');
-  if(t&&t.trim()){
-    setToken(t.trim());
-    toast('Token saved — syncing...');
-    // Push current data to cloud immediately
-    save();
-  }
+  const labels={'saved':'All changes saved','ready':'Ready','unsaved':'Unsaved changes'};
+  const colors={'saved':'var(--success)','ready':'var(--success)','unsaved':'var(--warning)'};
+  el.innerHTML='<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+(colors[st]||'var(--text-muted)')+';margin-right:6px;vertical-align:middle"></span>'+(labels[st]||st)
+    +'<br><span style="display:inline-flex;gap:8px;margin-top:4px">'
+    +'<a href="#" onclick="exportData();return false" style="color:var(--gold);font-size:9px;text-decoration:underline">Export Backup</a>'
+    +'<a href="#" onclick="importData();return false" style="color:var(--info);font-size:9px;text-decoration:underline">Import</a>'
+    +'</span>';
 }
 
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
