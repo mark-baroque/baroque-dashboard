@@ -572,8 +572,8 @@ document.addEventListener('click',function(e){
     case 'del-file': {const fsh=b.dataset.sh||'projects';if(confirm('Remove file?')){D[fsh][pi].files.splice(fi,1);D[fsh][pi].updated=now();markChanged();render();}} break;
     case 'approve-file': {const fsh=b.dataset.sh||'projects';D[fsh][pi].files[fi].approval='Approved';D[fsh][pi].files[fi].reviewedAt=now();D[fsh][pi].updated=now();save();render();} break;
     case 'reject-file': {const fsh=b.dataset.sh||'projects';D[fsh][pi].files[fi].approval='Rejected';D[fsh][pi].files[fi].reviewedAt=now();D[fsh][pi].updated=now();save();render();} break;
-    case 'save-notes': D.projects[pi].notes=b.closest('.expand-inner').querySelector('textarea').value;D.projects[pi].updated=now();markChanged();toast('Notes updated — click Save to persist'); break;
-    case 'save-notes-qf': D.quickfix[pi].notes=b.closest('.expand-inner').querySelector('textarea').value;D.quickfix[pi].updated=now();markChanged();toast('Notes updated — click Save to persist'); break;
+    case 'save-notes': {const ta=b.parentElement.querySelector('textarea');if(ta){D.projects[pi].notes=ta.value;D.projects[pi].updated=now();markChanged();render();toast('Notes saved');}} break;
+    case 'save-notes-qf': {const ta=b.parentElement.querySelector('textarea');if(ta){D.quickfix[pi].notes=ta.value;D.quickfix[pi].updated=now();markChanged();render();toast('Notes saved');}} break;
     case 'edit-qf': D.quickfix[pi]._editing=true; render(); break;
     case 'done-qf': readQFRow(pi);D.quickfix[pi]._editing=false;D.quickfix[pi].updated=now();markChanged();render(); break;
     case 'del-qf': if(confirm('Delete?')){D.quickfix.splice(pi,1);markChanged();render();} break;
