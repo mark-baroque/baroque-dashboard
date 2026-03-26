@@ -478,11 +478,12 @@ function ensureFields(r){
 }
 // === CLOUD SYNC ===
 const CLOUD_URL='https://jsonblob.com/api/jsonBlob/019d2946-f7b2-7828-a8c2-83bcf86192ff';
-let _cloudTimer=null;
 let _saving=false;
+let _hasUnsaved=false;
+
+function migrateQF(){D.quickfix.forEach(r=>{if(!r.files)r.files=[];if(!r.priority)r.priority='Standard';r.files.forEach(f=>{if(!f.approval)f.approval='Pending Review';});})}
 
 function load(){
-  // Load from localStorage first (instant)
   const s=localStorage.getItem('bq_dash_v13')||localStorage.getItem('bq_dash_v12')||localStorage.getItem('bq_dash_v8');
   if(s){
     D=JSON.parse(s);
@@ -490,33 +491,30 @@ function load(){
     if(!D.customCats)D.customCats=[];
     if(!D.quickfix)D.quickfix=[];
     if(!D.daily)D.daily=[];
-    D.quickfix.forEach(r=>{if(!r.files)r.files=[];if(!r.priority)r.priority='Standard';r.files.forEach(f=>{if(!f.approval)f.approval='Pending Review';});});
+    migrateQF();
   } else {
     D={projects:defProjects(),quickfix:[],daily:[],customCats:[]};
   }
-  saveLocal();
-  // Then try loading from cloud (may be newer)
+  localStorage.setItem('bq_dash_v13',JSON.stringify(D));
+  // Load from cloud on startup
   cloudLoad();
 }
 
-function saveLocal(){localStorage.setItem('bq_dash_v13',JSON.stringify(D));}
+// Mark as unsaved (in-memory only, no persist)
+function markChanged(){_hasUnsaved=true;updateSyncStatus('unsaved');}
 
-function save(){
-  saveLocal();
-  // Debounce cloud save — wait 2 seconds after last change
-  if(_cloudTimer)clearTimeout(_cloudTimer);
-  _cloudTimer=setTimeout(cloudSave,2000);
+// Full save — localStorage + cloud (only called by Save button and approve/reject)
+async function save(){
+  localStorage.setItem('bq_dash_v13',JSON.stringify(D));
+  _hasUnsaved=false;
   updateSyncStatus('saving');
-}
-
-async function cloudSave(){
   if(_saving)return;
   _saving=true;
   try{
     const res=await fetch(CLOUD_URL,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(D)});
-    if(res.ok){updateSyncStatus('saved');}
-    else{updateSyncStatus('error');}
-  }catch(e){updateSyncStatus('error');}
+    if(res.ok){updateSyncStatus('saved');toast('Saved to cloud');}
+    else{updateSyncStatus('error');toast('Save failed — stored locally');}
+  }catch(e){updateSyncStatus('error');toast('Save failed — stored locally');}
   _saving=false;
 }
 
@@ -527,7 +525,6 @@ async function cloudLoad(){
     if(res.ok){
       const cloud=await res.json();
       if(cloud&&cloud.projects&&cloud.projects.length>0){
-        // Use cloud data if it has more content or is different
         const localCount=D.projects.length+D.quickfix.length+D.daily.length;
         const cloudCount=(cloud.projects||[]).length+(cloud.quickfix||[]).length+(cloud.daily||[]).length;
         if(cloudCount>=localCount){
@@ -536,21 +533,21 @@ async function cloudLoad(){
           if(!D.customCats)D.customCats=[];
           if(!D.quickfix)D.quickfix=[];
           if(!D.daily)D.daily=[];
-          D.quickfix.forEach(r=>{if(!r.files)r.files=[];if(!r.priority)r.priority='Standard';r.files.forEach(f=>{if(!f.approval)f.approval='Pending Review';});});
-          saveLocal();
+          migrateQF();
+          localStorage.setItem('bq_dash_v13',JSON.stringify(D));
           render();
         }
       }
-      updateSyncStatus('synced');
-    }else{updateSyncStatus('error');}
-  }catch(e){updateSyncStatus('offline');}
+      updateSyncStatus('ready');
+    }else{updateSyncStatus('local');}
+  }catch(e){updateSyncStatus('local');}
 }
 
 function updateSyncStatus(st){
   const el=document.getElementById('syncStatus');if(!el)return;
-  const m={'saving':'Saving...','saved':'Saved to cloud','synced':'Synced','loading':'Loading from cloud...','error':'Sync error — using local','offline':'Offline — using local'};
-  const c={'saving':'var(--warning)','saved':'var(--success)','synced':'var(--success)','loading':'var(--info)','error':'var(--danger)','offline':'var(--text-muted)'};
-  el.innerHTML='<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+c[st]+';margin-right:6px;vertical-align:middle"></span>'+(m[st]||st);
+  const m={'saving':'Saving to cloud...','saved':'Saved to cloud','ready':'Cloud synced','loading':'Loading from cloud...','error':'Save error — local only','local':'Using local data','unsaved':'Unsaved changes'};
+  const c={'saving':'var(--warning)','saved':'var(--success)','ready':'var(--success)','loading':'var(--info)','error':'var(--danger)','local':'var(--text-muted)','unsaved':'var(--warning)'};
+  el.innerHTML='<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+(c[st]||'var(--text-muted)')+';margin-right:6px;vertical-align:middle"></span>'+(m[st]||st);
 }
 
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
@@ -568,25 +565,25 @@ document.addEventListener('click',function(e){
     case 'go': go(b.dataset.v); break;
     case 'expand': expSheet=b.dataset.sh||'projects'; expRow=expRow===pi?-1:pi; render(); break;
     case 'edit-proj': D.projects[pi]._editing=true; render(); break;
-    case 'done-proj': readProjRow(pi); D.projects[pi]._editing=false; D.projects[pi].updated=now(); save(); render(); break;
-    case 'del-proj': if(confirm('Delete?')){D.projects.splice(pi,1);save();render();} break;
+    case 'done-proj': readProjRow(pi); D.projects[pi]._editing=false; D.projects[pi].updated=now(); markChanged(); render(); break;
+    case 'del-proj': if(confirm('Delete?')){D.projects.splice(pi,1);markChanged();render();} break;
     case 'add-file': fileTgt=pi; fileTgtSheet=b.dataset.sh||'projects'; fileEditIdx=-1; openFileModal(); break;
     case 'edit-file': fileTgtSheet=b.dataset.sh||'projects'; fileTgt=pi; fileEditIdx=fi; openFileModal(D[fileTgtSheet][pi].files[fi]); break;
-    case 'del-file': {const fsh=b.dataset.sh||'projects';if(confirm('Remove file?')){D[fsh][pi].files.splice(fi,1);D[fsh][pi].updated=now();save();render();}} break;
+    case 'del-file': {const fsh=b.dataset.sh||'projects';if(confirm('Remove file?')){D[fsh][pi].files.splice(fi,1);D[fsh][pi].updated=now();markChanged();render();}} break;
     case 'approve-file': {const fsh=b.dataset.sh||'projects';D[fsh][pi].files[fi].approval='Approved';D[fsh][pi].files[fi].reviewedAt=now();D[fsh][pi].updated=now();save();render();} break;
     case 'reject-file': {const fsh=b.dataset.sh||'projects';D[fsh][pi].files[fi].approval='Rejected';D[fsh][pi].files[fi].reviewedAt=now();D[fsh][pi].updated=now();save();render();} break;
-    case 'save-notes': D.projects[pi].notes=b.closest('.expand-inner').querySelector('textarea').value;D.projects[pi].updated=now();save();toast('Notes saved'); break;
-    case 'save-notes-qf': D.quickfix[pi].notes=b.closest('.expand-inner').querySelector('textarea').value;D.quickfix[pi].updated=now();save();toast('Notes saved'); break;
+    case 'save-notes': D.projects[pi].notes=b.closest('.expand-inner').querySelector('textarea').value;D.projects[pi].updated=now();markChanged();toast('Notes updated — click Save to persist'); break;
+    case 'save-notes-qf': D.quickfix[pi].notes=b.closest('.expand-inner').querySelector('textarea').value;D.quickfix[pi].updated=now();markChanged();toast('Notes updated — click Save to persist'); break;
     case 'edit-qf': D.quickfix[pi]._editing=true; render(); break;
-    case 'done-qf': readQFRow(pi);D.quickfix[pi]._editing=false;D.quickfix[pi].updated=now();save();render(); break;
-    case 'del-qf': if(confirm('Delete?')){D.quickfix.splice(pi,1);save();render();} break;
+    case 'done-qf': readQFRow(pi);D.quickfix[pi]._editing=false;D.quickfix[pi].updated=now();markChanged();render(); break;
+    case 'del-qf': if(confirm('Delete?')){D.quickfix.splice(pi,1);markChanged();render();} break;
     case 'edit-dt': D.daily[pi]._editing=true; render(); break;
-    case 'done-dt': readDTRow(pi);D.daily[pi]._editing=false;D.daily[pi].updated=now();save();render(); break;
-    case 'del-dt': if(confirm('Delete?')){D.daily.splice(pi,1);save();render();} break;
-    case 'toggle-done': D.daily[pi].done=!D.daily[pi].done;if(D.daily[pi].done)D.daily[pi].status='Completed';D.daily[pi].updated=now();save();render(); break;
-    case 'chg-status': D[sh][pi].status=ns;D[sh][pi].updated=now();save();render(); break;
+    case 'done-dt': readDTRow(pi);D.daily[pi]._editing=false;D.daily[pi].updated=now();markChanged();render(); break;
+    case 'del-dt': if(confirm('Delete?')){D.daily.splice(pi,1);markChanged();render();} break;
+    case 'toggle-done': D.daily[pi].done=!D.daily[pi].done;if(D.daily[pi].done)D.daily[pi].status='Completed';D.daily[pi].updated=now();markChanged();render(); break;
+    case 'chg-status': D[sh][pi].status=ns;D[sh][pi].updated=now();markChanged();render(); break;
     case 'open-add': openAddModal(); break;
-    case 'save-all': save();toast('Saved!'); break;
+    case 'save-all': save(); break;
     case 'review-tab': window._reviewTab=b.dataset.tab; render(); break;
   }
 });
@@ -604,7 +601,7 @@ document.addEventListener('change',function(e){
     else if(tp==='owner')r.owner=v;
     else if(tp==='despct'){r.desPct=parseInt(v);autoAlign(r);}
     else if(tp==='devpct'){r.devPct=parseInt(v);autoAlign(r);}
-    r.updated=now();save();render();
+    r.updated=now();markChanged();render();
   }
 });
 
@@ -855,7 +852,7 @@ document.getElementById('fmSubmitBtn').addEventListener('click',function(){
   const tgt=D[fileTgtSheet][fileTgt];
   if(fileEditIdx>=0){const f=tgt.files[fileEditIdx];f.name=name;f.note=note;f.url=url;}
   else{if(!tgt.files)tgt.files=[];tgt.files.push({name,note,url,added:now(),approval:'Pending Review',reviewedAt:''});}
-  tgt.updated=now();expRow=fileTgt;expSheet=fileTgtSheet;save();document.getElementById('fileModal').classList.remove('show');render();
+  tgt.updated=now();expRow=fileTgt;expSheet=fileTgtSheet;markChanged();document.getElementById('fileModal').classList.remove('show');render();
 });
 
 // === ADD MODAL ===
@@ -885,7 +882,7 @@ function openAddModal(){
   const catSel=document.getElementById('m-cat');
   if(catSel)catSel.addEventListener('change',function(){
     const box=document.getElementById('newCatBox');
-    if(this.value==='__new__'){box.innerHTML='<div class="new-cat-row"><input id="nc-input" placeholder="New category name"><button id="nc-btn">Add</button></div>';document.getElementById('nc-input').focus();document.getElementById('nc-btn').addEventListener('click',function(){const n=document.getElementById('nc-input').value.trim();if(!n)return;if(!D.customCats.includes(n)){D.customCats.push(n);save();}const o=document.createElement('option');o.value=n;o.textContent=n;catSel.insertBefore(o,catSel.querySelector('option[value="__new__"]'));catSel.value=n;box.innerHTML='';});}
+    if(this.value==='__new__'){box.innerHTML='<div class="new-cat-row"><input id="nc-input" placeholder="New category name"><button id="nc-btn">Add</button></div>';document.getElementById('nc-input').focus();document.getElementById('nc-btn').addEventListener('click',function(){const n=document.getElementById('nc-input').value.trim();if(!n)return;if(!D.customCats.includes(n)){D.customCats.push(n);markChanged();}const o=document.createElement('option');o.value=n;o.textContent=n;catSel.insertBefore(o,catSel.querySelector('option[value="__new__"]'));catSel.value=n;box.innerHTML='';});}
     else box.innerHTML='';
   });
 }
@@ -902,7 +899,7 @@ document.getElementById('modalSubmitBtn').addEventListener('click',function(){
   } else if(view==='daily'){
     D.daily.push({date:gv('m-dt-date'),task:gv('m-dt-task'),dept:gv('m-dt-dept'),priority:gv('m-dt-pri')||'Medium',status:'Not Started',updated:now(),done:false,notes:gv('m-notes')});
   }
-  save();document.getElementById('addModal').classList.remove('show');render();
+  markChanged();document.getElementById('addModal').classList.remove('show');render();
 });
 
 // Handle input changes in expand row (URLs, target date)
@@ -916,7 +913,7 @@ document.addEventListener('input',function(e){
   else if(tp==='figmaurl')r.figmaUrl=fixUrl(s.value);
   else if(tp==='target')r.target=s.value;
   else if(tp==='qflink')r.link=s.value;
-  r.updated=now();save();
+  r.updated=now();markChanged();
 });
 
 load();render();
