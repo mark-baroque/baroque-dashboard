@@ -747,7 +747,7 @@ function renderReviewHub(){
     rows+='<tr><td><span class="source-badge '+scl+'">'+src+'</span></td><td><strong>'+E(item)+'</strong></td><td>'+E(r.dept||'')+'</td><td>'+E(detail)+'</td><td>'+statusBadge(r.status)+'</td><td class="date-cell">'+(r.updated||'\u2014')+'</td><td style="text-align:center;white-space:nowrap">'+acts+'</td></tr>';
   });});
   if(ct.fst){
-    // Files from projects AND quickfix
+    // Files from projects AND quickfix — shown as detailed cards inside table
     [['projects','Project'],['quickfix','Quick Fix']].forEach(([sh,label])=>{
       D[sh].forEach((item,pi)=>{(item.files||[]).forEach((f,fi)=>{
         if(f.approval!==ct.fst)return;
@@ -756,7 +756,29 @@ function renderReviewHub(){
         if(tab==='pending')acts='<button class="btn-approve" data-action="approve-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Approve</button> <button class="btn-reject" data-action="reject-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Reject</button>';
         else if(tab==='approved')acts='<button class="btn-reject" data-action="reject-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Reject</button>';
         else acts='<button class="btn-approve" data-action="approve-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Approve</button>';
-        rows+='<tr><td><span class="source-badge" style="background:var(--gold-bg);color:var(--gold)">File</span></td><td><strong>'+E(f.name)+'</strong><br><span style="font-size:10px;color:var(--text-sec)">'+E(itemName)+' \u2022 '+E(itemDept)+' ('+label+')</span></td><td>'+E(itemDept)+'</td><td>'+E(f.note||'')+'</td><td><span class="fa-badge '+faCls(f.approval)+'">'+E(f.approval)+'</span></td><td class="date-cell">'+(f.added||'')+'</td><td style="text-align:center;white-space:nowrap">'+acts+'</td></tr>';
+
+        // File card with full details
+        let fileView='<div style="display:flex;align-items:flex-start;gap:10px">'
+          +'<span style="font-size:20px">'+fIcon(f.name)+'</span>'
+          +'<div style="flex:1;min-width:0">'
+            +'<strong style="font-size:13px">'+E(f.name)+'</strong>'
+            +'<div style="font-size:11px;color:var(--text-sec);margin-top:2px">'+E(itemName)+' \u2022 '+E(itemDept)+' <span style="font-size:10px;opacity:.6">('+label+')</span></div>'
+            +(f.note?'<div style="font-size:12px;color:var(--text);margin-top:6px;padding:6px 10px;background:var(--bg);border-radius:6px;border:1px solid var(--border);white-space:normal;line-height:1.5">'+E(f.note)+'</div>':'')
+          +'</div>'
+          +'</div>';
+
+        let fileLink='';
+        if(f.url){fileLink='<a href="'+E(f.url)+'" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--info);text-decoration:none;padding:6px 14px;border-radius:8px;background:var(--info-bg);border:1px solid #bfdbfe;white-space:nowrap">\u{1F517} Open File</a>';}
+        else{fileLink='<span style="font-size:11px;color:var(--text-muted)">No link attached</span>';}
+
+        rows+='<tr>'
+          +'<td><span class="source-badge" style="background:var(--gold-bg);color:var(--gold)">File</span></td>'
+          +'<td colspan="2" style="white-space:normal">'+fileView+'</td>'
+          +'<td>'+fileLink+'</td>'
+          +'<td><span class="fa-badge '+faCls(f.approval)+'">'+E(f.approval)+'</span></td>'
+          +'<td class="date-cell">'+(f.added||'')+(f.reviewedAt?'<br>'+E(f.reviewedAt):'')+'</td>'
+          +'<td style="text-align:center;white-space:nowrap">'+acts+'</td>'
+          +'</tr>';
       });});
     });
   }
