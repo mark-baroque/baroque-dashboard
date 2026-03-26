@@ -707,11 +707,26 @@ function renderVert(dept){
 
 // === PIPELINE ===
 function renderPipeline(){
-  const dp=D.projects.filter(r=>(r.projType==='Development'||r.projType==='Discovery')&&r.status!=='Completed');
+  // All projects not completed, grouped by priority
+  const dp=D.projects.filter(r=>r.status!=='Completed');
   const urgent=dp.filter(r=>r.priority==='Urgent'),high=dp.filter(r=>r.priority==='High'),standard=dp.filter(r=>!r.priority||r.priority==='Standard');
-  function pc(r){const f=r.files||[],ap=f.filter(x=>x.approval==='Approved').length;return '<div class="pipe-card" data-action="go" data-v="'+E(r.dept)+'"><div class="pc-dept">'+E(r.dept)+' \u2022 '+E(r.cat)+'</div><div class="pc-name">'+E(r.sub)+'</div><div class="pc-meta">'+(f.length?'<span style="background:var(--info-bg);color:var(--info)">'+ap+'/'+f.length+' files</span>':'<span style="background:var(--bg);color:var(--text-muted);border:1px solid var(--border)">No files</span>')+'<span style="background:var(--bg);color:var(--text-sec);border:1px solid var(--border)">'+E(r.status)+'</span></div></div>';}
+  function pc(r){
+    const f=r.files||[],ap=f.filter(x=>x.approval==='Approved').length;
+    const phCls={'Live':'b-live','Development':'b-development','Discovery':'b-discovery'};
+    return '<div class="pipe-card" data-action="go" data-v="'+E(r.dept)+'">'
+      +'<div class="pc-dept">'+E(r.dept)+' \u2022 '+E(r.cat)+'</div>'
+      +'<div class="pc-name">'+E(r.sub)+'</div>'
+      +'<div class="pc-meta">'
+        +'<span class="b '+(phCls[r.projType]||'b-default')+'">'+E(r.projType)+'</span>'
+        +statusBadge(r.status)
+        +(f.length?'<span style="background:var(--info-bg);color:var(--info)">'+ap+'/'+f.length+' files</span>':'')
+      +'</div></div>';
+  }
   function col(cls,label,items){return '<div class="pipe-col '+cls+'"><div class="pipe-col-head">'+label+'<span class="pch-count">'+items.length+'</span></div><div class="pipe-col-body">'+(items.length?items.map(pc).join(''):'<div class="pipe-empty">No projects</div>')+'</div></div>';}
-  return '<div class="pg-h"><h1><span>Design Pipeline</span></h1></div><div class="stats-row"><div class="stat-card c-red"><div class="sn">'+urgent.length+'</div><div class="sl">Urgent</div></div><div class="stat-card c-orange"><div class="sn">'+high.length+'</div><div class="sl">High</div></div><div class="stat-card c-blue"><div class="sn">'+standard.length+'</div><div class="sl">Standard</div></div><div class="stat-card c-gold"><div class="sn">'+dp.length+'</div><div class="sl">Total Pipeline</div></div></div><div class="info-bar">Projects needing design work, grouped by priority. Changing priority in the project section updates this view. Click a card to go to that vertical.</div><div class="pipe-cols">'+col('pipe-urgent','Urgent',urgent)+col('pipe-high','High Priority',high)+col('pipe-standard','Standard',standard)+'</div>';
+  return '<div class="pg-h"><h1><span>Design Pipeline</span></h1></div>'
+    +'<div class="stats-row"><div class="stat-card c-red"><div class="sn">'+urgent.length+'</div><div class="sl">Urgent</div></div><div class="stat-card c-orange"><div class="sn">'+high.length+'</div><div class="sl">High</div></div><div class="stat-card c-blue"><div class="sn">'+standard.length+'</div><div class="sl">Standard</div></div><div class="stat-card c-gold"><div class="sn">'+dp.length+'</div><div class="sl">Total Pipeline</div></div></div>'
+    +'<div class="info-bar">All active projects grouped by <strong>priority</strong>. Set priority in any vertical page. Click a card to go to that vertical.</div>'
+    +'<div class="pipe-cols">'+col('pipe-urgent','Urgent',urgent)+col('pipe-high','High Priority',high)+col('pipe-standard','Standard',standard)+'</div>';
 }
 
 // === REVIEW HUB ===
@@ -831,7 +846,7 @@ function updateBadges(){
   const allFiles=[...D.projects,...D.quickfix].reduce((s,r)=>s.concat(r.files||[]),[]);
   const pend=all.filter(r=>r.status==='For Approval').length+allFiles.filter(f=>f.approval==='Pending Review').length;
   const el=document.getElementById('b-review');if(el)el.textContent=pend;
-  const pe=document.getElementById('b-pipeline');if(pe)pe.textContent=D.projects.filter(r=>(r.projType==='Development'||r.projType==='Discovery')&&r.status!=='Completed').length;
+  const pe=document.getElementById('b-pipeline');if(pe)pe.textContent=D.projects.filter(r=>r.status!=='Completed').length;
 }
 
 // === FILE MODAL ===
