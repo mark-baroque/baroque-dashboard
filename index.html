@@ -476,64 +476,71 @@ function ensureFields(r){
   if(!r.target)r.target='';
   r.files.forEach(f=>{if(!f.approval)f.approval='Pending Review';});
 }
-// === CLOUD SYNC ===
-const CLOUD_URL='https://jsonblob.com/api/jsonBlob/019d2946-f7b2-7828-a8c2-83bcf86192ff';
+// === CLOUD SYNC via GitHub Gist ===
+const GIST_ID='65e01ee810e08fb4f5a9b306d653383a';
+const GIST_FILE='baroque-dashboard-data.json';
 let _saving=false;
 let _hasUnsaved=false;
 
 function migrateQF(){D.quickfix.forEach(r=>{if(!r.files)r.files=[];if(!r.priority)r.priority='Standard';r.files.forEach(f=>{if(!f.approval)f.approval='Pending Review';});})}
 
+function getToken(){return localStorage.getItem('bq_gh_token')||'';}
+function setToken(t){localStorage.setItem('bq_gh_token',t);}
+
+function loadFromStorage(){
+  D.projects.forEach(ensureFields);
+  if(!D.customCats)D.customCats=[];
+  if(!D.quickfix)D.quickfix=[];
+  if(!D.daily)D.daily=[];
+  migrateQF();
+}
+
 function load(){
   const s=localStorage.getItem('bq_dash_v13')||localStorage.getItem('bq_dash_v12')||localStorage.getItem('bq_dash_v8');
-  if(s){
-    D=JSON.parse(s);
-    D.projects.forEach(ensureFields);
-    if(!D.customCats)D.customCats=[];
-    if(!D.quickfix)D.quickfix=[];
-    if(!D.daily)D.daily=[];
-    migrateQF();
-  } else {
-    D={projects:defProjects(),quickfix:[],daily:[],customCats:[]};
-  }
+  if(s){D=JSON.parse(s);loadFromStorage();}
+  else{D={projects:defProjects(),quickfix:[],daily:[],customCats:[]};}
   localStorage.setItem('bq_dash_v13',JSON.stringify(D));
-  // Load from cloud on startup
   cloudLoad();
 }
 
-// Mark as unsaved (in-memory only, no persist)
 function markChanged(){_hasUnsaved=true;updateSyncStatus('unsaved');}
 
-// Full save — localStorage + cloud (only called by Save button and approve/reject)
 async function save(){
   localStorage.setItem('bq_dash_v13',JSON.stringify(D));
   _hasUnsaved=false;
+  const token=getToken();
+  if(!token){
+    updateSyncStatus('local');
+    toast('Saved locally. Set GitHub token for cloud sync.');
+    return;
+  }
   updateSyncStatus('saving');
   if(_saving)return;
   _saving=true;
   try{
-    const res=await fetch(CLOUD_URL,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(D)});
+    const res=await fetch('https://api.github.com/gists/'+GIST_ID,{
+      method:'PATCH',
+      headers:{'Authorization':'token '+token,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
+      body:JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(D)}}})
+    });
     if(res.ok){updateSyncStatus('saved');toast('Saved to cloud');}
-    else{updateSyncStatus('error');toast('Save failed — stored locally');}
-  }catch(e){updateSyncStatus('error');toast('Save failed — stored locally');}
+    else{const err=await res.json();updateSyncStatus('error');toast('Save error: '+(err.message||res.status));}
+  }catch(e){updateSyncStatus('error');toast('Network error — saved locally');}
   _saving=false;
 }
 
 async function cloudLoad(){
   try{
     updateSyncStatus('loading');
-    const res=await fetch(CLOUD_URL);
+    // Public gists can be read without auth
+    const res=await fetch('https://api.github.com/gists/'+GIST_ID,{headers:{'Accept':'application/vnd.github.v3+json'}});
     if(res.ok){
-      const cloud=await res.json();
-      if(cloud&&cloud.projects&&cloud.projects.length>0){
-        const localCount=D.projects.length+D.quickfix.length+D.daily.length;
-        const cloudCount=(cloud.projects||[]).length+(cloud.quickfix||[]).length+(cloud.daily||[]).length;
-        if(cloudCount>=localCount){
-          D=cloud;
-          D.projects.forEach(ensureFields);
-          if(!D.customCats)D.customCats=[];
-          if(!D.quickfix)D.quickfix=[];
-          if(!D.daily)D.daily=[];
-          migrateQF();
+      const gist=await res.json();
+      const file=gist.files&&gist.files[GIST_FILE];
+      if(file&&file.content){
+        const cloud=JSON.parse(file.content);
+        if(cloud&&cloud.projects&&cloud.projects.length>0){
+          D=cloud;loadFromStorage();
           localStorage.setItem('bq_dash_v13',JSON.stringify(D));
           render();
         }
@@ -545,9 +552,16 @@ async function cloudLoad(){
 
 function updateSyncStatus(st){
   const el=document.getElementById('syncStatus');if(!el)return;
-  const m={'saving':'Saving to cloud...','saved':'Saved to cloud','ready':'Cloud synced','loading':'Loading from cloud...','error':'Save error — local only','local':'Using local data','unsaved':'Unsaved changes'};
+  const m={'saving':'Saving to cloud...','saved':'Saved to cloud','ready':'Cloud synced','loading':'Loading...','error':'Save error','local':'Local only','unsaved':'Unsaved changes'};
   const c={'saving':'var(--warning)','saved':'var(--success)','ready':'var(--success)','loading':'var(--info)','error':'var(--danger)','local':'var(--text-muted)','unsaved':'var(--warning)'};
-  el.innerHTML='<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+(c[st]||'var(--text-muted)')+';margin-right:6px;vertical-align:middle"></span>'+(m[st]||st);
+  const token=getToken();
+  let extra=token?'':'<br><a href="#" onclick="promptToken();return false" style="color:var(--gold);font-size:9px">Set GitHub token</a>';
+  el.innerHTML='<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+(c[st]||'var(--text-muted)')+';margin-right:6px;vertical-align:middle"></span>'+(m[st]||st)+extra;
+}
+
+function promptToken(){
+  const t=prompt('Enter your GitHub Personal Access Token (needs gist scope).\n\nCreate one at: github.com/settings/tokens/new\nSelect scope: gist\n\nPaste token here:');
+  if(t&&t.trim()){setToken(t.trim());toast('Token saved');cloudLoad();}
 }
 
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
