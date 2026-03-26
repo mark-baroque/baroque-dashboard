@@ -268,7 +268,19 @@ select.ss{padding:3px 8px;border:1px solid var(--border);border-radius:16px;font
 </style>
 </head>
 <body>
-<div class="layout">
+<!-- LOCK SCREEN -->
+<div id="lockScreen" style="position:fixed;top:0;left:0;right:0;bottom:0;background:var(--navy);z-index:9999;display:flex;align-items:center;justify-content:center">
+  <div style="background:var(--card);border-radius:20px;padding:48px 44px;width:400px;max-width:90vw;text-align:center;box-shadow:var(--shadow-lg)">
+    <div style="width:64px;height:64px;margin:0 auto 20px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff">&#128274;</div>
+    <h2 style="font-size:22px;font-weight:800;color:var(--navy);margin-bottom:6px"><span style="background:linear-gradient(135deg,var(--gold),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent">Baroque Group</span></h2>
+    <p style="font-size:13px;color:var(--text-sec);margin-bottom:24px">Enter your passcode to access the dashboard</p>
+    <input type="password" id="lockInput" maxlength="5" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;" style="width:100%;padding:14px 18px;border:2px solid var(--border);border-radius:12px;font-size:20px;text-align:center;letter-spacing:8px;font-weight:700;color:var(--navy);background:var(--bg);outline:none" onkeydown="if(event.key==='Enter')unlock()">
+    <button onclick="unlock()" style="margin-top:18px;width:100%;padding:14px;background:var(--gold);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(165,132,73,.3)">Unlock</button>
+    <div id="lockError" style="color:var(--danger);font-size:13px;font-weight:600;margin-top:12px;min-height:20px"></div>
+  </div>
+</div>
+
+<div class="layout" id="mainApp" style="display:none">
 <aside class="sidebar">
   <div class="sb-logo"><div class="lc">B</div><div><div class="sb-lt">Baroque Group</div><div class="sb-ls">Project Dashboard</div></div></div>
 
@@ -307,7 +319,15 @@ select.ss{padding:3px 8px;border:1px solid var(--border);border-radius:16px;font
 
   <div class="sb-footer">
     <div id="syncStatus" style="font-size:10px;color:rgba(255,255,255,.4);padding:6px 12px;margin-bottom:8px"></div>
-    <div class="user-pill"><div class="user-avatar">M</div><div><div style="color:#fff;font-size:13px;font-weight:600">Mark</div><div style="color:rgba(255,255,255,.35);font-size:11px">Design & Product</div></div></div>
+    <div style="display:flex;gap:6px;padding:0 12px 8px">
+      <button onclick="exportData()" style="flex:1;padding:6px;border-radius:6px;font-size:10px;font-weight:600;background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.08);cursor:pointer">Export</button>
+      <button onclick="importData()" style="flex:1;padding:6px;border-radius:6px;font-size:10px;font-weight:600;background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.08);cursor:pointer">Import</button>
+      <button onclick="logout()" style="padding:6px 10px;border-radius:6px;font-size:10px;font-weight:600;background:rgba(220,38,38,.15);color:#fca5a5;border:1px solid rgba(220,38,38,.2);cursor:pointer">Logout</button>
+    </div>
+    <div class="user-pill" id="userPill">
+      <div class="user-avatar" id="userAvatar">M</div>
+      <div><div style="color:#fff;font-size:13px;font-weight:600" id="userName">Mark</div><div style="color:rgba(255,255,255,.35);font-size:11px" id="userRole">Designer</div></div>
+    </div>
   </div>
 </aside>
 <div class="main" id="mc"></div>
@@ -950,7 +970,53 @@ document.addEventListener('input',function(e){
   r.updated=now();markChanged();
 });
 
-load();render();
+// === USER SYSTEM ===
+const USERS={'33026':{name:'Admin',role:'Admin',avatar:'A',color:'#7c3aed'},'55598':{name:'Designer',role:'Designer',avatar:'D',color:'#a58449'}};
+let currentUser=null;
+
+function unlock(){
+  const code=document.getElementById('lockInput').value;
+  const user=USERS[code];
+  if(user){
+    currentUser=user;
+    localStorage.setItem('bq_user',JSON.stringify(user));
+    document.getElementById('lockScreen').style.display='none';
+    document.getElementById('mainApp').style.display='flex';
+    document.getElementById('userName').textContent=user.name;
+    document.getElementById('userRole').textContent=user.role;
+    document.getElementById('userAvatar').textContent=user.avatar;
+    document.getElementById('userAvatar').style.background=user.color;
+    load();render();
+  } else {
+    document.getElementById('lockError').textContent='Wrong passcode';
+    document.getElementById('lockInput').value='';
+    document.getElementById('lockInput').style.borderColor='var(--danger)';
+    setTimeout(()=>{document.getElementById('lockInput').style.borderColor='var(--border)';document.getElementById('lockError').textContent='';},2000);
+  }
+}
+
+function logout(){
+  currentUser=null;
+  localStorage.removeItem('bq_user');
+  document.getElementById('lockScreen').style.display='flex';
+  document.getElementById('mainApp').style.display='none';
+  document.getElementById('lockInput').value='';
+}
+
+// Auto-login if session exists
+(function(){
+  const saved=localStorage.getItem('bq_user');
+  if(saved){
+    currentUser=JSON.parse(saved);
+    document.getElementById('lockScreen').style.display='none';
+    document.getElementById('mainApp').style.display='flex';
+    document.getElementById('userName').textContent=currentUser.name;
+    document.getElementById('userRole').textContent=currentUser.role;
+    document.getElementById('userAvatar').textContent=currentUser.avatar;
+    document.getElementById('userAvatar').style.background=currentUser.color;
+    load();render();
+  }
+})();
 </script>
 </body>
 </html>
