@@ -334,6 +334,18 @@ select.ss{padding:3px 8px;border:1px solid var(--border);border-radius:16px;font
 </div>
 <div class="mo" id="addModal"><div class="modal"><h2 id="mt">Add</h2><div id="mb"></div><div class="m-acts"><button class="btn-cancel" id="modalCancelBtn">Cancel</button><button class="btn-submit" id="modalSubmitBtn">Add</button></div></div></div>
 <div class="mo" id="fileModal"><div class="modal" style="width:500px"><h2 id="fmTitle">Add File / Link</h2><div class="mf"><label>File Name</label><input id="fm-name" placeholder="e.g. Homepage Design v2"></div><div class="mf"><label>What is this file?</label><textarea id="fm-note" style="min-height:50px" placeholder="Describe what this file is for..."></textarea></div><div class="mf"><label>Link / URL</label><input id="fm-url" placeholder="https://figma.com/... or https://drive.google.com/..."></div><p class="mf-hint">Paste a link — auto-adds https:// if missing. Date is auto-stamped.</p><div class="m-acts"><button class="btn-cancel" id="fmCancelBtn">Cancel</button><button class="btn-submit" id="fmSubmitBtn">Add File</button></div></div></div>
+<!-- SAVE PROMPT (appears after 30s inactivity with unsaved changes) -->
+<div id="savePrompt" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,.4);backdrop-filter:blur(4px);z-index:5000;justify-content:center;align-items:center">
+  <div style="background:var(--card);border-radius:16px;padding:32px;width:400px;max-width:90vw;text-align:center;box-shadow:var(--shadow-lg)">
+    <div style="font-size:36px;margin-bottom:12px">&#128190;</div>
+    <h3 style="font-size:18px;font-weight:700;color:var(--navy);margin-bottom:8px">Unsaved Changes</h3>
+    <p style="font-size:13px;color:var(--text-sec);margin-bottom:24px">You have unsaved changes. Would you like to save now?</p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button onclick="dismissPrompt()" style="padding:10px 24px;border-radius:10px;font-size:13px;font-weight:600;background:var(--bg);color:var(--text-sec);border:1px solid var(--border);cursor:pointer">Not Now</button>
+      <button onclick="saveFromPrompt()" style="padding:10px 24px;border-radius:10px;font-size:13px;font-weight:600;background:var(--gold);color:#fff;border:none;cursor:pointer;box-shadow:0 2px 8px rgba(165,132,73,.3)">Save Now</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -496,8 +508,14 @@ function ensureFields(r){
   if(!r.target)r.target='';
   r.files.forEach(f=>{if(!f.approval)f.approval='Pending Review';});
 }
-// === STORAGE ===
+// === STORAGE + CLOUD SYNC ===
+const GIST_ID='65e01ee810e08fb4f5a9b306d653383a';
+const GIST_FILE='baroque-dashboard-data.json';
+function getGHToken(){return localStorage.getItem('bq_gh_token')||'';}
+function setGHToken(t){localStorage.setItem('bq_gh_token',t);}
 let _hasUnsaved=false;
+let _saving=false;
+let _idleTimer=null;
 
 function migrateQF(){D.quickfix.forEach(r=>{if(!r.files)r.files=[];if(!r.priority)r.priority='Standard';r.files.forEach(f=>{if(!f.approval)f.approval='Pending Review';});})}
 
@@ -514,16 +532,89 @@ function load(){
   if(s){D=JSON.parse(s);prepareData();}
   else{D={projects:defProjects(),quickfix:[],daily:[],customCats:[]};}
   localStorage.setItem('bq_dash_v13',JSON.stringify(D));
-  updateSyncStatus('ready');
+  cloudLoad();
 }
 
-function markChanged(){_hasUnsaved=true;updateSyncStatus('unsaved');}
+function markChanged(){
+  _hasUnsaved=true;
+  updateSyncStatus('unsaved');
+  // Reset idle timer — after 30s of inactivity with unsaved changes, prompt
+  resetIdleTimer();
+}
 
-function save(){
+function resetIdleTimer(){
+  if(_idleTimer)clearTimeout(_idleTimer);
+  if(!_hasUnsaved)return;
+  _idleTimer=setTimeout(()=>{
+    if(_hasUnsaved){showSavePrompt();}
+  },30000);
+}
+
+function showSavePrompt(){
+  const el=document.getElementById('savePrompt');
+  if(el)el.style.display='flex';
+}
+function hideSavePrompt(){
+  const el=document.getElementById('savePrompt');
+  if(el)el.style.display='none';
+}
+function saveFromPrompt(){
+  hideSavePrompt();
+  save();
+}
+function dismissPrompt(){
+  hideSavePrompt();
+}
+
+// Save to localStorage + cloud
+async function save(){
   localStorage.setItem('bq_dash_v13',JSON.stringify(D));
   _hasUnsaved=false;
-  updateSyncStatus('saved');
-  toast('Saved');
+  if(_idleTimer)clearTimeout(_idleTimer);
+  updateSyncStatus('saving');
+  await cloudSave();
+}
+
+async function cloudSave(){
+  if(_saving)return;
+  const token=getGHToken();
+  if(!token){updateSyncStatus('saved-local');return;}
+  _saving=true;
+  try{
+    const res=await fetch('https://api.github.com/gists/'+GIST_ID,{
+      method:'PATCH',
+      headers:{'Authorization':'token '+getGHToken(),'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
+      body:JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(D)}}})
+    });
+    if(res.ok){updateSyncStatus('saved');toast('Saved to cloud');}
+    else{updateSyncStatus('saved-local');toast('Saved locally');}
+  }catch(e){updateSyncStatus('saved-local');toast('Saved locally');}
+  _saving=false;
+}
+
+async function cloudLoad(){
+  const token=getGHToken();
+  if(!token){updateSyncStatus('ready');return;}
+  try{
+    updateSyncStatus('loading');
+    const headers={'Accept':'application/vnd.github.v3+json'};
+    if(token)headers['Authorization']='token '+token;
+    const res=await fetch('https://api.github.com/gists/'+GIST_ID,{headers});
+    if(!res.ok){updateSyncStatus('ready');return;}
+    const gist=await res.json();
+    const file=gist.files&&gist.files[GIST_FILE];
+    if(file&&file.content){
+      try{
+        const cloud=JSON.parse(file.content);
+        if(cloud&&cloud.projects&&cloud.projects.length>0){
+          D=cloud;prepareData();
+          localStorage.setItem('bq_dash_v13',JSON.stringify(D));
+          render();
+        }
+      }catch(e){}
+    }
+    updateSyncStatus('ready');
+  }catch(e){updateSyncStatus('ready');}
 }
 
 function exportData(){
@@ -545,10 +636,8 @@ function importData(){
         const imported=JSON.parse(reader.result);
         if(!imported.projects){toast('Invalid file');return;}
         D=imported;prepareData();
-        localStorage.setItem('bq_dash_v13',JSON.stringify(D));
-        render();
-        toast('Data restored from backup');
-        updateSyncStatus('saved');
+        save();render();
+        toast('Data restored');
       }catch(e){toast('Error reading file');}
     };
     reader.readAsText(file);
@@ -558,16 +647,24 @@ function importData(){
 
 function updateSyncStatus(st){
   const el=document.getElementById('syncStatus');if(!el)return;
-  const labels={'saved':'All changes saved','ready':'Ready','unsaved':'Unsaved changes'};
-  const colors={'saved':'var(--success)','ready':'var(--success)','unsaved':'var(--warning)'};
-  el.innerHTML='<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+(colors[st]||'var(--text-muted)')+';margin-right:6px;vertical-align:middle"></span>'+(labels[st]||st)
-    +'<br><span style="display:inline-flex;gap:8px;margin-top:4px">'
-    +'<a href="#" onclick="exportData();return false" style="color:var(--gold);font-size:9px;text-decoration:underline">Export Backup</a>'
-    +'<a href="#" onclick="importData();return false" style="color:var(--info);font-size:9px;text-decoration:underline">Import</a>'
-    +'</span>';
+  const labels={'saving':'Saving...','saved':'Saved to cloud','saved-local':'Saved locally','ready':'Cloud synced','loading':'Syncing...','unsaved':'Unsaved changes','no-cloud':'Local only'};
+  const colors={'saving':'var(--warning)','saved':'var(--success)','saved-local':'var(--success)','ready':'var(--success)','loading':'var(--info)','unsaved':'var(--warning)','no-cloud':'var(--text-muted)'};
+  let extra='';
+  if(st==='no-cloud')extra='<br><a href="#" onclick="promptGHToken();return false" style="color:var(--gold);font-size:9px;text-decoration:underline">Setup cloud sync</a>';
+  el.innerHTML='<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+(colors[st]||'var(--text-muted)')+';margin-right:6px;vertical-align:middle"></span>'+(labels[st]||st)+extra;
+}
+
+function promptGHToken(){
+  const t=prompt('Enter GitHub token for cloud sync (gist scope):\\n\\nCreate at: github.com/settings/tokens/new\\nScope: gist only');
+  if(t&&t.trim()){setGHToken(t.trim());toast('Cloud sync enabled');cloudLoad();}
 }
 
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
+
+// Warn before closing with unsaved changes
+window.addEventListener('beforeunload',function(e){
+  if(_hasUnsaved){e.preventDefault();e.returnValue='You have unsaved changes.';}
+});
 
 // === EVENT DELEGATION ===
 document.addEventListener('click',function(e){
@@ -972,6 +1069,13 @@ document.addEventListener('input',function(e){
 
 // === USER SYSTEM ===
 const USERS={'33026':{name:'Admin',role:'Admin',avatar:'A',color:'#7c3aed'},'55598':{name:'Designer',role:'Designer',avatar:'D',color:'#a58449'}};
+
+// Auto-set GitHub token on first admin login if not already set
+function checkCloudSetup(){
+  if(!getGHToken()){
+    updateSyncStatus('no-cloud');
+  }
+}
 let currentUser=null;
 
 function unlock(){
