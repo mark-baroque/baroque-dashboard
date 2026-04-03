@@ -132,6 +132,7 @@ td[contenteditable="true"]:focus{outline:none;background:#fefce8;box-shadow:inse
 .b-rejected{background:var(--danger-bg);color:var(--danger);}
 .b-on-hold{background:var(--danger-bg);color:var(--danger);}
 .b-pending{background:var(--orange-bg);color:var(--orange);}
+.b-revision-requested{background:#fff0f0;color:#c53030;border:1px solid #feb2b2;}
 /* Priority */
 .b-standard{background:var(--info-bg);color:var(--info);}
 .b-high{background:var(--warning-bg);color:#b45309;}
@@ -182,6 +183,26 @@ select.ss{padding:3px 8px;border:1px solid var(--border);border-radius:16px;font
 .fa-pending{background:var(--warning-bg);color:#b45309;border:1px solid #fde68a;}
 .fa-approved{background:var(--success-bg);color:var(--success);border:1px solid #a7f3d0;}
 .fa-rejected{background:var(--danger-bg);color:var(--danger);border:1px solid #fca5a5;}
+.fa-revision{background:#fff0f0;color:#c53030;border:1px solid #feb2b2;}
+.rev-count{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:#fef3c7;color:#92400e;margin-left:4px;}
+.rev-history{margin-top:8px;padding:8px 12px;background:var(--bg);border-radius:8px;border:1px solid var(--border);max-height:120px;overflow-y:auto;}
+.rev-entry{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:11px;color:var(--text-sec);border-bottom:1px solid var(--border-light);}
+.rev-entry:last-child{border-bottom:none;}
+.rev-entry .rev-ver{font-weight:700;color:var(--text);min-width:22px;}
+.rev-entry .rev-status{font-weight:600;}
+.rev-entry .rev-status.rs-approved{color:var(--success);}
+.rev-entry .rev-status.rs-rejected{color:var(--danger);}
+.rev-entry .rev-status.rs-revision{color:#c53030;}
+.rev-entry .rev-status.rs-pending{color:#b45309;}
+.rev-entry .rev-date{font-size:10px;color:var(--text-muted);}
+.rev-entry .rev-note{font-style:italic;color:var(--text-sec);}
+.screenshot-area{margin-top:8px;position:relative;}
+.screenshot-thumb{max-width:200px;max-height:120px;border-radius:8px;border:1px solid var(--border);cursor:pointer;transition:var(--tr);}
+.screenshot-thumb:hover{box-shadow:var(--shadow);transform:scale(1.02);}
+.screenshot-upload{display:flex;align-items:center;gap:8px;padding:10px 14px;border:2px dashed var(--border);border-radius:8px;font-size:12px;color:var(--text-muted);cursor:pointer;transition:var(--tr);}
+.screenshot-upload:hover{border-color:var(--gold);color:var(--gold);}
+.screenshot-lightbox{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,.8);z-index:3000;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.screenshot-lightbox img{max-width:90vw;max-height:90vh;border-radius:12px;box-shadow:var(--shadow-lg);}
 .file-card .fc-link{margin-left:auto;}
 .file-card .fc-link a{font-size:11px;font-weight:600;color:var(--info);text-decoration:none;padding:3px 10px;border-radius:6px;background:var(--info-bg);border:1px solid #bfdbfe;}
 .file-card .fc-note{font-size:12px;color:var(--text-sec);line-height:1.5;margin:6px 0;white-space:normal;}
@@ -349,7 +370,7 @@ select.ss{padding:3px 8px;border:1px solid var(--border);border-radius:16px;font
 <div class="toast" id="toast"></div>
 
 <script>
-const STS=['Not Started','In Progress','Pending','For Approval','Approved','Rejected','Completed','On Hold'];
+const STS=['Not Started','In Progress','Pending','For Approval','Approved','Rejected','Revision Requested','Completed','On Hold'];
 const VERTS=['Baroque Access','Baroque Aviation','Baroque Yachts','Baroque Properties','Baroque Travel','Baroque Ground','Baroque Lifestyle','Baroque Group','LUJO','Twilio'];
 const VCOL={'Baroque Access':'#8b5cf6','Baroque Aviation':'#3b82f6','Baroque Yachts':'#06b6d4','Baroque Properties':'#10b981','Baroque Travel':'#f59e0b','Baroque Ground':'#ef4444','Baroque Lifestyle':'#ec4899','Baroque Group':'#a58449','LUJO':'#f97316','Twilio':'#6366f1'};
 const CATS_DEF=['Website','Dashboard','Mobile App','Confirmation Emails','Marketing'];
@@ -375,7 +396,51 @@ function phaseBadge(v){const m={'Live':'b-live','Development':'b-development','D
 function statusBadge(v){const k=v.toLowerCase().replace(/\s+/g,'-');return '<span class="b b-'+k+'">'+E(v).toUpperCase()+'</span>';}
 function priBadge(v){return '<span class="b b-'+(v||'standard').toLowerCase()+'">'+E(v||'Standard').toUpperCase()+'</span>';}
 function ownerBadge(v){const m={'Designer':'b-designer','Developer':'b-developer','Both':'b-both-own','PM':'b-default','None':'b-default'};return '<span class="b '+(m[v]||'b-default')+'">'+E(v||'None')+'</span>';}
-function faCls(s){if(s==='Approved')return 'fa-approved';if(s==='Rejected')return 'fa-rejected';return 'fa-pending';}
+function faCls(s){if(s==='Approved')return 'fa-approved';if(s==='Rejected')return 'fa-rejected';if(s==='Revision Requested')return 'fa-revision';return 'fa-pending';}
+
+// === REVISION HISTORY ===
+function addRevHistory(file,newStatus,note){
+  if(!file.history)file.history=[];
+  file.history.push({ver:file.history.length+1,status:newStatus,date:now(),note:note||''});
+}
+function revCount(file){
+  if(!file.history)return 0;
+  return file.history.filter(h=>h.status==='Revision Requested').length;
+}
+function renderRevHistory(file){
+  if(!file.history||!file.history.length)return '';
+  let h='<div class="rev-history"><div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px">Revision History</div>';
+  file.history.forEach(e=>{
+    const sc=e.status==='Approved'?'rs-approved':e.status==='Rejected'?'rs-rejected':e.status==='Revision Requested'?'rs-revision':'rs-pending';
+    h+='<div class="rev-entry"><span class="rev-ver">v'+e.ver+'</span><span class="rev-status '+sc+'">'+E(e.status)+'</span><span class="rev-date">'+E(e.date)+'</span>'+(e.note?'<span class="rev-note">\u2014 '+E(e.note)+'</span>':'')+'</div>';
+  });
+  return h+'</div>';
+}
+function revCountBadge(file){
+  const c=revCount(file);
+  if(c===0)return '';
+  return '<span class="rev-count">\u{1F504} '+c+' revision'+(c>1?'s':'')+'</span>';
+}
+
+// === SCREENSHOT ===
+function handleScreenshot(sh,pi,fi,dataUrl){
+  D[sh][pi].files[fi].screenshot=dataUrl;
+  D[sh][pi].updated=now();
+  markChanged();render();
+}
+function renderScreenshot(file,sh,pi,fi){
+  if(file.screenshot){
+    return '<div class="screenshot-area"><img class="screenshot-thumb" src="'+file.screenshot+'" onclick="openLightbox(this.src)" title="Click to enlarge"><br><button class="btn-delete" style="margin-top:4px" data-action="del-screenshot" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Remove</button></div>';
+  }
+  return '<div class="screenshot-area"><label class="screenshot-upload" data-action="upload-screenshot" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'"><span>\u{1F4F7}</span> Upload screenshot or paste image</label></div>';
+}
+function openLightbox(src){
+  const lb=document.createElement('div');
+  lb.className='screenshot-lightbox';
+  lb.innerHTML='<img src="'+src+'">';
+  lb.onclick=function(){document.body.removeChild(lb);};
+  document.body.appendChild(lb);
+}
 
 function linkIcon(url,cls,label){
   if(!url)return '<span class="link-none">\u2014</span>';
@@ -506,7 +571,7 @@ function ensureFields(r){
   if(!r.stagingUrl)r.stagingUrl='';
   if(!r.figmaUrl)r.figmaUrl='';
   if(!r.target)r.target='';
-  r.files.forEach(f=>{if(!f.approval)f.approval='Pending Review';});
+  r.files.forEach(f=>{if(!f.approval)f.approval='Pending Review';if(!f.history)f.history=[];});
 }
 // === STORAGE + CLOUD SYNC ===
 const GIST_ID='65e01ee810e08fb4f5a9b306d653383a';
@@ -517,7 +582,7 @@ let _hasUnsaved=false;
 let _saving=false;
 let _idleTimer=null;
 
-function migrateQF(){D.quickfix.forEach(r=>{if(!r.files)r.files=[];if(!r.priority)r.priority='Standard';r.files.forEach(f=>{if(!f.approval)f.approval='Pending Review';});})}
+function migrateQF(){D.quickfix.forEach(r=>{if(!r.files)r.files=[];if(!r.priority)r.priority='Standard';r.files.forEach(f=>{if(!f.approval)f.approval='Pending Review';if(!f.history)f.history=[];});})}
 
 function prepareData(){
   D.projects.forEach(ensureFields);
@@ -684,8 +749,11 @@ document.addEventListener('click',function(e){
     case 'add-file': fileTgt=pi; fileTgtSheet=b.dataset.sh||'projects'; fileEditIdx=-1; openFileModal(); break;
     case 'edit-file': fileTgtSheet=b.dataset.sh||'projects'; fileTgt=pi; fileEditIdx=fi; openFileModal(D[fileTgtSheet][pi].files[fi]); break;
     case 'del-file': {const fsh=b.dataset.sh||'projects';if(confirm('Remove file?')){D[fsh][pi].files.splice(fi,1);D[fsh][pi].updated=now();markChanged();render();}} break;
-    case 'approve-file': {const fsh=b.dataset.sh||'projects';D[fsh][pi].files[fi].approval='Approved';D[fsh][pi].files[fi].reviewedAt=now();D[fsh][pi].updated=now();save();render();} break;
-    case 'reject-file': {const fsh=b.dataset.sh||'projects';D[fsh][pi].files[fi].approval='Rejected';D[fsh][pi].files[fi].reviewedAt=now();D[fsh][pi].updated=now();save();render();} break;
+    case 'approve-file': {const fsh=b.dataset.sh||'projects';const af=D[fsh][pi].files[fi];af.approval='Approved';af.reviewedAt=now();addRevHistory(af,'Approved');D[fsh][pi].updated=now();save();render();} break;
+    case 'reject-file': {const fsh=b.dataset.sh||'projects';const rf=D[fsh][pi].files[fi];rf.approval='Rejected';rf.reviewedAt=now();addRevHistory(rf,'Rejected');D[fsh][pi].updated=now();save();render();} break;
+    case 'revision-file': {const fsh=b.dataset.sh||'projects';const rvf=D[fsh][pi].files[fi];const rvNote=prompt('What needs to change? (optional)');rvf.approval='Revision Requested';rvf.reviewedAt=now();addRevHistory(rvf,'Revision Requested',rvNote);D[fsh][pi].updated=now();save();render();} break;
+    case 'del-screenshot': {const dsh=b.dataset.sh||'projects';delete D[dsh][pi].files[fi].screenshot;D[dsh][pi].updated=now();markChanged();render();} break;
+    case 'upload-screenshot': {const ush=b.dataset.sh,upi=pi,ufi=fi;const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=function(){const f=inp.files[0];if(!f)return;const reader=new FileReader();reader.onload=function(){handleScreenshot(ush,upi,ufi,reader.result);};reader.readAsDataURL(f);};inp.click();} break;
     case 'save-notes': {const ta=b.parentElement.querySelector('textarea');if(ta){D.projects[pi].notes=ta.value;D.projects[pi].updated=now();markChanged();render();toast('Notes saved');}} break;
     case 'save-notes-qf': {const ta=b.parentElement.querySelector('textarea');if(ta){D.quickfix[pi].notes=ta.value;D.quickfix[pi].updated=now();markChanged();render();toast('Notes saved');}} break;
     case 'edit-qf': D.quickfix[pi]._editing=true; render(); break;
@@ -803,8 +871,8 @@ function renderVert(dept){
 
         let fc='';
         f.forEach((fl,fi)=>{
-          const apC=faCls(fl.approval||'Pending Review'),canA=fl.approval!=='Approved',canR=fl.approval!=='Rejected';
-          fc+='<div class="file-card"><div class="fc-top"><span class="fc-icon">'+fIcon(fl.name)+'</span><span class="fc-name">'+E(fl.name)+'</span><span class="fa-badge '+apC+'">'+E(fl.approval||'Pending Review')+'</span>'+(fl.url?'<span class="fc-link"><a href="'+E(fl.url)+'" target="_blank">Open</a></span>':'')+'</div>'+(fl.note?'<div class="fc-note">'+E(fl.note)+'</div>':'')+'<div class="fc-date">'+(fl.added?'Added '+E(fl.added):'')+(fl.reviewedAt?' \u00B7 '+E(fl.reviewedAt):'')+'</div><div class="fc-actions">'+(canA?'<button class="btn-approve" data-action="approve-file" data-pi="'+i+'" data-fi="'+fi+'">Approve</button>':'')+(canR?'<button class="btn-reject" data-action="reject-file" data-pi="'+i+'" data-fi="'+fi+'">Reject</button>':'')+'<button class="btn-edit" data-action="edit-file" data-pi="'+i+'" data-fi="'+fi+'">Edit</button><button class="btn-delete" data-action="del-file" data-pi="'+i+'" data-fi="'+fi+'">Delete</button></div></div>';
+          const apC=faCls(fl.approval||'Pending Review'),canA=fl.approval!=='Approved',canR=fl.approval!=='Rejected',canRev=fl.approval==='Approved';
+          fc+='<div class="file-card"><div class="fc-top"><span class="fc-icon">'+fIcon(fl.name)+'</span><span class="fc-name">'+E(fl.name)+'</span><span class="fa-badge '+apC+'">'+E(fl.approval||'Pending Review')+'</span>'+revCountBadge(fl)+(fl.url?'<span class="fc-link"><a href="'+E(fl.url)+'" target="_blank">Open</a></span>':'')+'</div>'+(fl.note?'<div class="fc-note">'+E(fl.note)+'</div>':'')+'<div class="fc-date">'+(fl.added?'Added '+E(fl.added):'')+(fl.reviewedAt?' \u00B7 '+E(fl.reviewedAt):'')+'</div>'+renderScreenshot(fl,'projects',i,fi)+renderRevHistory(fl)+'<div class="fc-actions">'+(canA?'<button class="btn-approve" data-action="approve-file" data-pi="'+i+'" data-fi="'+fi+'">Approve</button>':'')+(canRev?'<button class="btn-hold" data-action="revision-file" data-pi="'+i+'" data-fi="'+fi+'">\u{1F504} Request Revision</button>':'')+(canR?'<button class="btn-reject" data-action="reject-file" data-pi="'+i+'" data-fi="'+fi+'">Reject</button>':'')+'<button class="btn-edit" data-action="edit-file" data-pi="'+i+'" data-fi="'+fi+'">Edit</button><button class="btn-delete" data-action="del-file" data-pi="'+i+'" data-fi="'+fi+'">Delete</button></div></div>';
         });
         fc+='<div class="add-file-card" data-action="add-file" data-pi="'+i+'">+ Add File / Link</div>';
 
@@ -846,7 +914,7 @@ function renderPipeline(){
 // === REVIEW HUB ===
 function renderReviewHub(){
   const tab=window._reviewTab||'pending';
-  const tabs=[{k:'pending',label:'For Approval',st:'For Approval',fst:'Pending Review'},{k:'approved',label:'Approved',st:'Approved',fst:'Approved'},{k:'rejected',label:'Rejected',st:'Rejected',fst:'Rejected'},{k:'onhold',label:'On Hold',st:'On Hold',fst:null}];
+  const tabs=[{k:'pending',label:'For Approval',st:'For Approval',fst:'Pending Review'},{k:'approved',label:'Approved',st:'Approved',fst:'Approved'},{k:'revision',label:'Revision Requested',st:'Revision Requested',fst:'Revision Requested'},{k:'rejected',label:'Rejected',st:'Rejected',fst:'Rejected'},{k:'onhold',label:'On Hold',st:'On Hold',fst:null}];
   let th='<div class="review-tabs">';tabs.forEach(t=>{th+='<button class="review-tab'+(tab===t.k?' active':'')+'" data-action="review-tab" data-tab="'+t.k+'">'+t.label+'</button>';});th+='</div>';
   const ct=tabs.find(t=>t.k===tab)||tabs[0];
   let rows='';
@@ -857,6 +925,7 @@ function renderReviewHub(){
     let acts='';
     if(tab==='pending')acts='<button class="btn-approve" data-action="chg-status" data-sh="'+sh+'" data-pi="'+i+'" data-ns="Approved">Approve</button> <button class="btn-reject" data-action="chg-status" data-sh="'+sh+'" data-pi="'+i+'" data-ns="Rejected">Reject</button> <button class="btn-hold" data-action="chg-status" data-sh="'+sh+'" data-pi="'+i+'" data-ns="On Hold">Hold</button>';
     else if(tab==='onhold')acts='<button class="btn-approve" data-action="chg-status" data-sh="'+sh+'" data-pi="'+i+'" data-ns="In Progress">Resume</button>';
+    else if(tab==='revision')acts='<button class="btn-approve" data-action="chg-status" data-sh="'+sh+'" data-pi="'+i+'" data-ns="In Progress">Back to Work</button>';
     else acts='<button class="btn-edit" data-action="chg-status" data-sh="'+sh+'" data-pi="'+i+'" data-ns="In Progress">Reopen</button>';
     rows+='<tr><td><span class="source-badge '+scl+'">'+src+'</span></td><td><strong>'+E(item)+'</strong></td><td>'+E(r.dept||'')+'</td><td>'+E(detail)+'</td><td>'+statusBadge(r.status)+'</td><td class="date-cell">'+(r.updated||'\u2014')+'</td><td style="text-align:center;white-space:nowrap">'+acts+'</td></tr>';
   });});
@@ -868,16 +937,18 @@ function renderReviewHub(){
         const itemName=item.sub||item.task||'';const itemDept=item.dept||'';
         let acts='';
         if(tab==='pending')acts='<button class="btn-approve" data-action="approve-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Approve</button> <button class="btn-reject" data-action="reject-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Reject</button>';
-        else if(tab==='approved')acts='<button class="btn-reject" data-action="reject-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Reject</button>';
+        else if(tab==='approved')acts='<button class="btn-hold" data-action="revision-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">\u{1F504} Request Revision</button> <button class="btn-reject" data-action="reject-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Reject</button>';
+        else if(tab==='revision')acts='<button class="btn-approve" data-action="approve-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Approve</button> <button class="btn-reject" data-action="reject-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Reject</button>';
         else acts='<button class="btn-approve" data-action="approve-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Approve</button>';
 
         // File card with full details
         let fileView='<div style="display:flex;align-items:flex-start;gap:10px">'
           +'<span style="font-size:20px">'+fIcon(f.name)+'</span>'
           +'<div style="flex:1;min-width:0">'
-            +'<strong style="font-size:13px">'+E(f.name)+'</strong>'
+            +'<strong style="font-size:13px">'+E(f.name)+'</strong>'+revCountBadge(f)
             +'<div style="font-size:11px;color:var(--text-sec);margin-top:2px">'+E(itemName)+' \u2022 '+E(itemDept)+' <span style="font-size:10px;opacity:.6">('+label+')</span></div>'
             +(f.note?'<div style="font-size:12px;color:var(--text);margin-top:6px;padding:6px 10px;background:var(--bg);border-radius:6px;border:1px solid var(--border);white-space:normal;line-height:1.5">'+E(f.note)+'</div>':'')
+            +renderRevHistory(f)
           +'</div>'
           +'</div>';
 
@@ -932,8 +1003,8 @@ function renderQF(){
 
       let fc='';
       f.forEach((fl,fi)=>{
-        const apC=faCls(fl.approval||'Pending Review'),canA=fl.approval!=='Approved',canR=fl.approval!=='Rejected';
-        fc+='<div class="file-card"><div class="fc-top"><span class="fc-icon">'+fIcon(fl.name)+'</span><span class="fc-name">'+E(fl.name)+'</span><span class="fa-badge '+apC+'">'+E(fl.approval||'Pending Review')+'</span>'+(fl.url?'<span class="fc-link"><a href="'+E(fl.url)+'" target="_blank">Open</a></span>':'')+'</div>'+(fl.note?'<div class="fc-note">'+E(fl.note)+'</div>':'')+'<div class="fc-date">'+(fl.added?'Added '+E(fl.added):'')+(fl.reviewedAt?' \u00B7 '+E(fl.reviewedAt):'')+'</div><div class="fc-actions">'+(canA?'<button class="btn-approve" data-action="approve-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">Approve</button>':'')+(canR?'<button class="btn-reject" data-action="reject-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">Reject</button>':'')+'<button class="btn-edit" data-action="edit-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">Edit</button><button class="btn-delete" data-action="del-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">Delete</button></div></div>';
+        const apC=faCls(fl.approval||'Pending Review'),canA=fl.approval!=='Approved',canR=fl.approval!=='Rejected',canRev=fl.approval==='Approved';
+        fc+='<div class="file-card"><div class="fc-top"><span class="fc-icon">'+fIcon(fl.name)+'</span><span class="fc-name">'+E(fl.name)+'</span><span class="fa-badge '+apC+'">'+E(fl.approval||'Pending Review')+'</span>'+revCountBadge(fl)+(fl.url?'<span class="fc-link"><a href="'+E(fl.url)+'" target="_blank">Open</a></span>':'')+'</div>'+(fl.note?'<div class="fc-note">'+E(fl.note)+'</div>':'')+'<div class="fc-date">'+(fl.added?'Added '+E(fl.added):'')+(fl.reviewedAt?' \u00B7 '+E(fl.reviewedAt):'')+'</div>'+renderScreenshot(fl,'quickfix',i,fi)+renderRevHistory(fl)+'<div class="fc-actions">'+(canA?'<button class="btn-approve" data-action="approve-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">Approve</button>':'')+(canRev?'<button class="btn-hold" data-action="revision-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">\u{1F504} Request Revision</button>':'')+(canR?'<button class="btn-reject" data-action="reject-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">Reject</button>':'')+'<button class="btn-edit" data-action="edit-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">Edit</button><button class="btn-delete" data-action="del-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">Delete</button></div></div>';
       });
       fc+='<div class="add-file-card" data-action="add-file" data-sh="quickfix" data-pi="'+i+'">+ Add File / Link</div>';
 
@@ -980,7 +1051,7 @@ function updateBadges(){
   document.getElementById('b-dt').textContent=D.daily.length;
   const all=[...D.projects,...D.quickfix,...D.daily];
   const allFiles=[...D.projects,...D.quickfix].reduce((s,r)=>s.concat(r.files||[]),[]);
-  const pend=all.filter(r=>r.status==='For Approval').length+allFiles.filter(f=>f.approval==='Pending Review').length;
+  const pend=all.filter(r=>r.status==='For Approval'||r.status==='Revision Requested').length+allFiles.filter(f=>f.approval==='Pending Review'||f.approval==='Revision Requested').length;
   const el=document.getElementById('b-review');if(el)el.textContent=pend;
   const pe=document.getElementById('b-pipeline');if(pe)pe.textContent=D.projects.filter(r=>r.status!=='Completed').length;
 }
@@ -1002,7 +1073,7 @@ document.getElementById('fmSubmitBtn').addEventListener('click',function(){
   if(!name){alert('File name is required');return;}
   const tgt=D[fileTgtSheet][fileTgt];
   if(fileEditIdx>=0){const f=tgt.files[fileEditIdx];f.name=name;f.note=note;f.url=url;}
-  else{if(!tgt.files)tgt.files=[];tgt.files.push({name,note,url,added:now(),approval:'Pending Review',reviewedAt:''});}
+  else{if(!tgt.files)tgt.files=[];const nf={name,note,url,added:now(),approval:'Pending Review',reviewedAt:'',history:[]};addRevHistory(nf,'Pending Review','File created');tgt.files.push(nf);}
   tgt.updated=now();expRow=fileTgt;expSheet=fileTgtSheet;markChanged();document.getElementById('fileModal').classList.remove('show');render();
 });
 
@@ -1106,6 +1177,27 @@ function logout(){
   document.getElementById('mainApp').style.display='none';
   document.getElementById('lockInput').value='';
 }
+
+// Paste screenshot support — when clipboard has image and a file card is expanded
+document.addEventListener('paste',function(e){
+  const items=e.clipboardData&&e.clipboardData.items;if(!items)return;
+  for(let i=0;i<items.length;i++){
+    if(items[i].type.indexOf('image')!==-1){
+      // Find the currently visible upload-screenshot button to determine target
+      const uploadBtns=document.querySelectorAll('[data-action="upload-screenshot"]');
+      if(!uploadBtns.length)return;
+      // Use the first visible one
+      const btn=uploadBtns[0];
+      const sh=btn.dataset.sh,pi=+btn.dataset.pi,fi=+btn.dataset.fi;
+      const blob=items[i].getAsFile();
+      const reader=new FileReader();
+      reader.onload=function(){handleScreenshot(sh,pi,fi,reader.result);toast('Screenshot pasted');};
+      reader.readAsDataURL(blob);
+      e.preventDefault();
+      return;
+    }
+  }
+});
 
 // Auto-login if session exists
 (function(){
