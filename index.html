@@ -253,7 +253,7 @@ select.ss:focus{outline:none;border-color:var(--gold);}
 <!-- LOCK SCREEN -->
 <div id="lockScreen" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#191924;z-index:9999;display:flex;align-items:center;justify-content:center">
   <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:44px 40px;width:380px;max-width:90vw;text-align:center">
-    <div style="width:52px;height:52px;margin:0 auto 20px;background:#b59a6a;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff">&#128274;</div>
+    <div style="width:52px;height:52px;margin:0 auto 20px;background:#b59a6a;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff">B</div>
     <h2 style="font-size:20px;font-weight:700;color:rgba(255,255,255,.88);margin-bottom:6px">Baroque Group</h2>
     <p style="font-size:13px;color:rgba(255,255,255,.3);margin-bottom:24px">Enter passcode to continue</p>
     <input type="password" id="lockInput" maxlength="5" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;" style="width:100%;padding:14px 18px;border:1px solid rgba(255,255,255,.06);border-radius:10px;font-size:20px;text-align:center;letter-spacing:8px;font-weight:700;color:rgba(255,255,255,.88);background:rgba(255,255,255,.04);outline:none" onkeydown="if(event.key==='Enter')unlock()">
@@ -268,36 +268,37 @@ select.ss:focus{outline:none;border-color:var(--gold);}
 
   <div class="sb-sec" data-toggle="dashboard-group">Dashboard <span class="sb-arrow">&#9660;</span></div>
   <div class="sb-group" id="dashboard-group">
-    <button class="sb-item active" data-v="overview"><span class="si">&#9776;</span> Overview <span class="badge bg-gold" id="b-all">0</span></button>
-    <button class="sb-item" data-v="pipeline"><span class="si">&#9998;</span> Design Pipeline <span class="badge bg-purple" id="b-pipeline">0</span></button>
+    <button class="sb-item active" data-v="overview"><span class="si">=</span> Overview <span class="badge bg-gold" id="b-all">0</span></button>
+    <button class="sb-item" data-v="pipeline"><span class="si">~</span> Design Pipeline <span class="badge bg-purple" id="b-pipeline">0</span></button>
   </div>
 
   <div class="sb-sec" data-toggle="verticals-group">Verticals <span class="sb-arrow">&#9660;</span></div>
   <div class="sb-group" id="verticals-group">
-    <button class="sb-item vc-access" data-v="Baroque Access"><span class="si">&#9830;</span> Baroque Access <span class="badge bg-gray" id="b-Baroque Access">0</span></button>
-    <button class="sb-item vc-aviation" data-v="Baroque Aviation"><span class="si">&#9992;</span> Baroque Aviation <span class="badge bg-gray" id="b-Baroque Aviation">0</span></button>
-    <button class="sb-item vc-yachts" data-v="Baroque Yachts"><span class="si">&#9973;</span> Baroque Yachts <span class="badge bg-gray" id="b-Baroque Yachts">0</span></button>
-    <button class="sb-item vc-properties" data-v="Baroque Properties"><span class="si">&#127968;</span> Baroque Properties <span class="badge bg-gray" id="b-Baroque Properties">0</span></button>
-    <button class="sb-item vc-travel" data-v="Baroque Travel"><span class="si">&#9992;</span> Baroque Travel <span class="badge bg-gray" id="b-Baroque Travel">0</span></button>
-    <button class="sb-item vc-ground" data-v="Baroque Ground"><span class="si">&#128663;</span> Baroque Ground <span class="badge bg-gray" id="b-Baroque Ground">0</span></button>
-    <button class="sb-item vc-lifestyle" data-v="Baroque Lifestyle"><span class="si">&#10024;</span> Baroque Lifestyle <span class="badge bg-gray" id="b-Baroque Lifestyle">0</span></button>
-    <button class="sb-item vc-group" data-v="Baroque Group"><span class="si">&#127775;</span> Baroque Group <span class="badge bg-gray" id="b-Baroque Group">0</span></button>
-    <button class="sb-item vc-lujo" data-v="LUJO"><span class="si">&#128142;</span> LUJO <span class="badge bg-gray" id="b-LUJO">0</span></button>
-    <button class="sb-item vc-twilio" data-v="Twilio"><span class="si">&#128172;</span> Twilio <span class="badge bg-gray" id="b-Twilio">0</span></button>
+    <button class="sb-item vc-access" data-v="Baroque Access"><span class="si">*</span> Baroque Access <span class="badge bg-gray" id="b-Baroque Access">0</span></button>
+    <button class="sb-item vc-aviation" data-v="Baroque Aviation"><span class="si">></span> Baroque Aviation <span class="badge bg-gray" id="b-Baroque Aviation">0</span></button>
+    <button class="sb-item vc-yachts" data-v="Baroque Yachts"><span class="si">></span> Baroque Yachts <span class="badge bg-gray" id="b-Baroque Yachts">0</span></button>
+    <button class="sb-item vc-properties" data-v="Baroque Properties"><span class="si">></span> Baroque Properties <span class="badge bg-gray" id="b-Baroque Properties">0</span></button>
+    <button class="sb-item vc-travel" data-v="Baroque Travel"><span class="si">></span> Baroque Travel <span class="badge bg-gray" id="b-Baroque Travel">0</span></button>
+    <button class="sb-item vc-ground" data-v="Baroque Ground"><span class="si">></span> Baroque Ground <span class="badge bg-gray" id="b-Baroque Ground">0</span></button>
+    <button class="sb-item vc-lifestyle" data-v="Baroque Lifestyle"><span class="si">></span> Baroque Lifestyle <span class="badge bg-gray" id="b-Baroque Lifestyle">0</span></button>
+    <button class="sb-item vc-group" data-v="Baroque Group"><span class="si">></span> Baroque Group <span class="badge bg-gray" id="b-Baroque Group">0</span></button>
+    <button class="sb-item vc-lujo" data-v="LUJO"><span class="si">></span> LUJO <span class="badge bg-gray" id="b-LUJO">0</span></button>
+    <button class="sb-item vc-twilio" data-v="Twilio"><span class="si">></span> Twilio <span class="badge bg-gray" id="b-Twilio">0</span></button>
   </div>
 
   <div class="sb-div"></div>
   <div class="sb-sec" data-toggle="tasks-group">Tasks <span class="sb-arrow">&#9660;</span></div>
   <div class="sb-group" id="tasks-group">
-    <button class="sb-item" data-v="quickfix"><span class="si">&#9889;</span> Quick Fix <span class="badge bg-orange" id="b-qf">0</span></button>
-    <button class="sb-item" data-v="daily"><span class="si">&#128197;</span> Daily Tasks <span class="badge bg-blue" id="b-dt">0</span></button>
+    <button class="sb-item" data-v="quickfix"><span class="si">></span> Quick Fix <span class="badge bg-orange" id="b-qf">0</span></button>
+    <button class="sb-item" data-v="daily"><span class="si">></span> Daily Tasks <span class="badge bg-blue" id="b-dt">0</span></button>
   </div>
 
   <div class="sb-div"></div>
   <div class="sb-sec" data-toggle="review-group">Review <span class="sb-arrow">&#9660;</span></div>
   <div class="sb-group" id="review-group">
-    <button class="sb-item" data-v="review"><span class="si">&#128172;</span> Review Board <span class="badge bg-purple" id="b-review">0</span></button>
-    <button class="sb-item" data-v="status"><span class="si">&#128202;</span> My Status Report</button>
+    <button class="sb-item" data-v="review"><span class="si">></span> Review Board <span class="badge bg-purple" id="b-review">0</span></button>
+    <button class="sb-item" data-v="meetings"><span class="si">></span> Meetings <span class="badge bg-gold" id="b-meetings">0</span></button>
+    <button class="sb-item" data-v="status"><span class="si">></span> My Status Report</button>
   </div>
 
   <div class="sb-footer">
@@ -321,7 +322,7 @@ select.ss:focus{outline:none;border-color:var(--gold);}
 <!-- SAVE PROMPT (appears after 30s inactivity with unsaved changes) -->
 <div id="savePrompt" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,.4);backdrop-filter:blur(4px);z-index:5000;justify-content:center;align-items:center">
   <div style="background:var(--card);border-radius:16px;padding:32px;width:400px;max-width:90vw;text-align:center;box-shadow:var(--shadow-lg)">
-    <div style="font-size:36px;margin-bottom:12px">&#128190;</div>
+    <div style="font-size:36px;margin-bottom:12px">!</div>
     <h3 style="font-size:18px;font-weight:700;color:var(--navy);margin-bottom:8px">Unsaved Changes</h3>
     <p style="font-size:13px;color:var(--text-sec);margin-bottom:24px">You have unsaved changes. Would you like to save now?</p>
     <div style="display:flex;gap:10px;justify-content:center">
@@ -343,7 +344,7 @@ const PRI_OPTS=['Standard','High','Urgent'];
 const IFACE_OPTS=['Client-facing','Admin','Supplier','API','Internal'];
 const OWNER_OPTS=['Designer','Developer','Both','PM','None'];
 
-let D={projects:[],quickfix:[],daily:[],customCats:[]};
+let D={projects:[],quickfix:[],daily:[],meetings:[],customCats:[]};
 let view='overview',expRow=-1,expSheet='projects',fileTgt=-1,fileTgtSheet='projects',fileEditIdx=-1;
 window._reviewTab='pending';
 
@@ -351,7 +352,7 @@ function now(){const d=new Date();return d.toLocaleDateString('en-GB',{day:'2-di
 function E(s){if(!s)return '';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 function allCats(){return [...CATS_DEF,...(D.customCats||[])];}
 function fixUrl(u){u=(u||'').trim();if(!u)return '';if(u.startsWith('http://')||u.startsWith('https://')||u.startsWith('/'))return u;return 'https://'+u;}
-function fIcon(n){n=(n||'').toLowerCase();if(n.includes('figma'))return'\u{1F3A8}';if(n.includes('design')||n.includes('.psd'))return'\u{1F3A8}';if(n.includes('.pdf')||n.includes('.doc'))return'\u{1F4C4}';if(n.includes('prototype')||n.includes('.html'))return'\u{1F4BB}';return'\u{1F4CE}';}
+function fIcon(n){n=(n||'').toLowerCase();if(n.includes('figma'))return'\u25CF';if(n.includes('design')||n.includes('.psd'))return'\u25CF';if(n.includes('.pdf')||n.includes('.doc'))return'\u25CB';if(n.includes('prototype')||n.includes('.html'))return'\u25A0';return'\u25CB';}
 
 function catBadge(c){const k=(c||'').toLowerCase().replace(/\s+/g,'-');const m={'website':'b-website','dashboard':'b-dashboard','mobile-app':'b-mobile-app','marketing':'b-marketing','confirmation-emails':'b-confirmation-emails'};return '<span class="b '+(m[k]||'b-default')+'">'+E(c).toUpperCase()+'</span>';}
 function ifaceBadge(v){const m={'Client-facing':'b-client','Admin':'b-admin','Supplier':'b-supplier','API':'b-api','Internal':'b-default'};return '<span class="b '+(m[v]||'b-default')+'">'+E(v)+'</span>';}
@@ -382,7 +383,7 @@ function renderRevHistory(file){
 function revCountBadge(file){
   const c=revCount(file);
   if(c===0)return '';
-  return '<span class="rev-count">\u{1F504} '+c+' revision'+(c>1?'s':'')+'</span>';
+  return '<span class="rev-count">'+c+' revision'+(c>1?'s':'')+'</span>';
 }
 
 // === SCREENSHOT ===
@@ -415,7 +416,7 @@ function openProjectModal(sh,pi){
   const fRev=f.filter(x=>x.approval==='Revision Requested').length;
   const fRej=f.filter(x=>x.approval==='Rejected').length;
 
-  let h='<div class="pdm-header"><div class="pdm-icon" style="background:'+col+'">'+(sh==='quickfix'?'\u26A1':'\u{1F4CB}')+'</div><div class="pdm-title"><h2>'+E(r.sub||r.task||'Untitled')+'</h2><div class="pdm-sub">'+E(r.dept||'')+' \u2022 '+E(r.cat||r.project||'')+(r.scope?' \u2022 '+E(r.scope):'')+'</div><div class="pdm-badges">'+statusBadge(r.status||'Not Started')+priBadge(r.priority)+(r.projType?phaseBadge(r.projType):'')+(r.iface?ifaceBadge(r.iface):'')+(r.owner?ownerBadge(r.owner):'')+'</div></div><button class="btn-cancel" onclick="document.getElementById(\'projModal\').classList.remove(\'show\')" style="flex-shrink:0">\u2715</button></div>';
+  let h='<div class="pdm-header"><div class="pdm-icon" style="background:'+col+'">'+(sh==='quickfix'?'>':'>')+'</div><div class="pdm-title"><h2>'+E(r.sub||r.task||'Untitled')+'</h2><div class="pdm-sub">'+E(r.dept||'')+' \u2022 '+E(r.cat||r.project||'')+(r.scope?' \u2022 '+E(r.scope):'')+'</div><div class="pdm-badges">'+statusBadge(r.status||'Not Started')+priBadge(r.priority)+(r.projType?phaseBadge(r.projType):'')+(r.iface?ifaceBadge(r.iface):'')+(r.owner?ownerBadge(r.owner):'')+'</div></div><button class="btn-cancel" onclick="document.getElementById(\'projModal\').classList.remove(\'show\')" style="flex-shrink:0">\u2715</button></div>';
 
   // Info grid
   h+='<div class="pdm-grid">';
@@ -443,7 +444,7 @@ function openProjectModal(sh,pi){
       h+='<div class="file-card"><div class="fc-top"><span class="fc-icon">'+fIcon(fl.name)+'</span><span class="fc-name">'+E(fl.name)+'</span><span class="fa-badge '+apC+'">'+E(fl.approval||'Pending Review')+'</span>'+revCountBadge(fl)+(fl.url?'<span class="fc-link"><a href="'+E(fl.url)+'" target="_blank">Open</a></span>':'')+'</div>'+(fl.note?'<div class="fc-note">'+E(fl.note)+'</div>':'')+'<div class="fc-date">'+(fl.added?'Added '+E(fl.added):'')+(fl.reviewedAt?' \u00B7 Reviewed '+E(fl.reviewedAt):'')+'</div>';
       if(fl.screenshot)h+='<div class="screenshot-area"><img class="screenshot-thumb" src="'+fl.screenshot+'" onclick="openLightbox(this.src)" title="Click to enlarge"></div>';
       h+=renderRevHistory(fl);
-      h+='<div class="fc-actions">'+(canA?'<button class="btn-approve" data-action="approve-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Approve</button>':'')+(canRev?'<button class="btn-hold" data-action="revision-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">\u{1F504} Request Revision</button>':'')+(canR?'<button class="btn-reject" data-action="reject-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Reject</button>':'')+'</div></div>';
+      h+='<div class="fc-actions">'+(canA?'<button class="btn-approve" data-action="approve-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Approve</button>':'')+(canRev?'<button class="btn-hold" data-action="revision-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Request Revision</button>':'')+(canR?'<button class="btn-reject" data-action="reject-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Reject</button>':'')+'</div></div>';
     });
     h+='</div>';
   } else {
@@ -496,7 +497,7 @@ function renderStatusReport(){
   const fRevision=allFiles.filter(f=>f.approval==='Revision Requested').length;
   const totalRevisions=allFiles.reduce((s,f)=>s+revCount(f),0);
 
-  let h='<div class="pg-h"><h1><span>My Status Report</span></h1><div class="tbar"><button class="btn btn-gold" onclick="window.print()">Print / PDF</button><button class="btn btn-success" data-action="save-all">\u{1F4BE} Save</button></div></div>';
+  let h='<div class="pg-h"><h1><span>My Status Report</span></h1><div class="tbar"><button class="btn btn-gold" onclick="window.print()">Print / PDF</button><button class="btn btn-success" data-action="save-all">Save</button></div></div>';
 
   // Summary stats
   h+='<div class="sr-summary">';
@@ -539,7 +540,7 @@ function renderStatusReport(){
   const revItems=all.filter(r=>r.status==='Revision Requested');
   const revFiles=[];
   [...all,...qf].forEach((r,i)=>{const sh=i<all.length?'projects':'quickfix';const pi=i<all.length?i:i-all.length;(r.files||[]).forEach((f,fi)=>{if(f.approval==='Revision Requested')revFiles.push({file:f,item:r,sh,pi,fi});});});
-  h+='<div class="sr-card"><h3>\u{1F504} Revision Requested <span class="pdm-count">'+(revItems.length+revFiles.length)+'</span></h3>';
+  h+='<div class="sr-card"><h3>Revision Requested <span class="pdm-count">'+(revItems.length+revFiles.length)+'</span></h3>';
   if(revItems.length||revFiles.length){
     revItems.forEach(r=>{const pi=D.projects.indexOf(r);const col=VCOL[r.dept]||'var(--gold)';
       h+='<div class="sr-item" data-action="view-project" data-sh="projects" data-pi="'+pi+'"><div class="sr-dot" style="background:'+col+'"></div><div class="sr-name">'+E(r.sub)+'</div><div class="sr-dept">'+E(r.dept)+'</div><div class="sr-meta">'+statusBadge('Revision Requested')+'</div></div>';
@@ -557,7 +558,7 @@ function renderStatusReport(){
   h+='<div class="sr-card"><h3>\u2705 Approved Files <span class="pdm-count">'+approvedFiles.length+'</span></h3>';
   if(approvedFiles.length){
     approvedFiles.slice(0,10).forEach(({file:f,item:r,sh,pi})=>{const col=VCOL[r.dept]||'var(--gold)';const rc=revCount(f);
-      h+='<div class="sr-item" data-action="view-project" data-sh="'+sh+'" data-pi="'+pi+'"><div class="sr-dot" style="background:'+col+'"></div><div class="sr-name">'+E(f.name)+(rc?' <span class="rev-count">\u{1F504} '+rc+'</span>':'')+'</div><div class="sr-dept">'+E(r.dept||'')+' \u2022 '+E(r.sub||r.task||'')+'</div><div class="sr-meta"><span class="fa-badge fa-approved">Approved</span></div></div>';
+      h+='<div class="sr-item" data-action="view-project" data-sh="'+sh+'" data-pi="'+pi+'"><div class="sr-dot" style="background:'+col+'"></div><div class="sr-name">'+E(f.name)+(rc?' <span class="rev-count">'+rc+'</span>':'')+'</div><div class="sr-dept">'+E(r.dept||'')+' \u2022 '+E(r.sub||r.task||'')+'</div><div class="sr-meta"><span class="fa-badge fa-approved">Approved</span></div></div>';
     });
     if(approvedFiles.length>10)h+='<div style="text-align:center;font-size:12px;color:var(--text-muted);padding:8px">+ '+(approvedFiles.length-10)+' more</div>';
   } else h+='<div class="sr-empty">No approved files yet</div>';
@@ -574,6 +575,74 @@ function renderStatusReport(){
   }
 
   return h;
+}
+
+// === MEETINGS ===
+function renderMeetings(){
+  let cards='';
+  D.meetings.forEach((m,i)=>{
+    const f=m.files||[],ai=m.actionItems||[];
+    const doneAI=ai.filter(a=>a.done).length;
+
+    // Files list
+    let fileList='';
+    f.forEach((fl,fi)=>{
+      fileList+='<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg);border-radius:6px;margin-bottom:4px"><span style="font-size:14px">'+fIcon(fl.name)+'</span><span style="flex:1;font-size:12px;font-weight:600">'+E(fl.name)+'</span>'+(fl.url?'<a href="'+E(fl.url)+'" target="_blank" style="font-size:11px;font-weight:600;color:var(--info);text-decoration:none;padding:2px 8px;border-radius:5px;background:var(--info-bg)">Open</a>':'')+'<span style="font-size:10px;color:var(--text-muted)">'+E(fl.added||'')+'</span><button class="btn-delete" data-action="del-meeting-file" data-pi="'+i+'" data-fi="'+fi+'" style="font-size:10px;padding:2px 6px">x</button></div>';
+    });
+
+    // Action items
+    let aiList='';
+    ai.forEach((a,ai_idx)=>{
+      aiList+='<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg);border-radius:6px;margin-bottom:4px"><input type="checkbox" '+(a.done?'checked':'')+' data-action="toggle-ai" data-pi="'+i+'" data-ai="'+ai_idx+'" style="cursor:pointer"><span style="flex:1;font-size:12px;'+(a.done?'text-decoration:line-through;color:var(--text-muted)':'')+'">'+E(a.task)+'</span>'+(a.assignee?'<span class="b b-default" style="font-size:9px">'+E(a.assignee)+'</span>':'')+'<button class="btn-delete" data-action="del-ai" data-pi="'+i+'" data-ai="'+ai_idx+'" style="font-size:10px;padding:2px 6px">x</button></div>';
+    });
+
+    cards+='<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden">'
+      +'<div style="padding:18px 20px;cursor:pointer" data-action="expand" data-sh="meetings" data-pi="'+i+'">'
+      +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">'
+      +'<div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em">'+E(m.date||'No date')+'</div>'
+      +priBadge(m.priority||'Standard')
+      +(ai.length?'<span style="font-size:10px;color:var(--text-sec)">'+doneAI+'/'+ai.length+' actions done</span>':'')
+      +'<span style="font-size:10px;color:var(--text-muted);margin-left:auto">'+E(m.updated||'')+'</span>'
+      +'</div>'
+      +'<div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px">'+E(m.title||'Untitled Meeting')+'</div>'
+      +'<div style="font-size:12px;color:var(--text-sec)">'+E(m.attendees||'')+'</div>'
+      +'</div>';
+
+    if(expSheet==='meetings'&&expRow===i){
+      cards+='<div style="padding:0 20px 20px;border-top:1px solid var(--border)">'
+        // Summary
+        +'<div style="margin-top:16px"><h4 style="font-size:11px;font-weight:700;color:var(--text-sec);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Meeting Summary</h4>'
+        +'<textarea class="expand-notes-area" data-sh="meetings" data-pi="'+i+'" style="min-height:80px">'+E(m.summary||'')+'</textarea>'
+        +'<button class="btn btn-gold" style="margin-top:8px;padding:6px 14px;font-size:12px" data-action="save-meeting-summary" data-pi="'+i+'">Save Summary</button></div>'
+
+        // CEO Notes / Key Decisions
+        +'<div style="margin-top:16px"><h4 style="font-size:11px;font-weight:700;color:var(--text-sec);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Key Decisions / CEO Notes</h4>'
+        +'<textarea class="expand-notes-area" data-sh="meetings" data-pi="'+i+'" id="meeting-notes-'+i+'" style="min-height:60px">'+E(m.notes||'')+'</textarea>'
+        +'<button class="btn btn-gold" style="margin-top:8px;padding:6px 14px;font-size:12px" data-action="save-meeting-notes" data-pi="'+i+'">Save Notes</button></div>'
+
+        // Action Items
+        +'<div style="margin-top:16px"><h4 style="font-size:11px;font-weight:700;color:var(--text-sec);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Action Items ('+ai.length+')</h4>'
+        +aiList
+        +'<div class="add-file-card" data-action="add-ai" data-pi="'+i+'" style="padding:10px;margin-top:4px">+ Add Action Item</div></div>'
+
+        // Files from CEO
+        +'<div style="margin-top:16px"><h4 style="font-size:11px;font-weight:700;color:var(--text-sec);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Files & Attachments ('+f.length+')</h4>'
+        +fileList
+        +'<div class="add-file-card" data-action="add-meeting-file" data-pi="'+i+'" style="padding:10px;margin-top:4px">+ Add File / Link</div></div>'
+
+        // Delete meeting
+        +'<div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);text-align:right"><button class="btn-delete" data-action="del-meeting" data-pi="'+i+'">Delete Meeting</button></div>'
+        +'</div>';
+    }
+
+    cards+='</div>';
+  });
+
+  if(!D.meetings.length)cards='<div class="empty-state"><p>No meetings yet</p><button class="btn btn-gold" data-action="add-meeting">+ Add Meeting</button></div>';
+
+  return '<div class="pg-h"><h1><span>Meetings</span></h1><div class="tbar"><button class="btn btn-gold" data-action="add-meeting">+ Add Meeting</button><button class="btn btn-success" data-action="save-all">Save</button></div></div>'
+    +'<div class="info-bar">Track meetings with your CEO. Add <strong>summaries</strong>, <strong>action items</strong>, and <strong>files</strong> shared during each meeting.</div>'
+    +cards;
 }
 
 function linkIcon(url,cls,label){
@@ -724,13 +793,15 @@ function prepareData(){
   if(!D.customCats)D.customCats=[];
   if(!D.quickfix)D.quickfix=[];
   if(!D.daily)D.daily=[];
+  if(!D.meetings)D.meetings=[];
+  D.meetings.forEach(m=>{if(!m.files)m.files=[];if(!m.actionItems)m.actionItems=[];});
   migrateQF();
 }
 
 function load(){
   const s=localStorage.getItem('bq_dash_v13')||localStorage.getItem('bq_dash_v12')||localStorage.getItem('bq_dash_v8');
   if(s){D=JSON.parse(s);prepareData();}
-  else{D={projects:defProjects(),quickfix:[],daily:[],customCats:[]};}
+  else{D={projects:defProjects(),quickfix:[],daily:[],meetings:[],customCats:[]};}
   localStorage.setItem('bq_dash_v13',JSON.stringify(D));
   cloudLoad();
 }
@@ -869,7 +940,8 @@ window.addEventListener('beforeunload',function(e){
 // === EVENT DELEGATION ===
 document.addEventListener('click',function(e){
   const tag=e.target.tagName;
-  if(tag==='SELECT'||tag==='OPTION'||tag==='INPUT'||tag==='TEXTAREA'||tag==='A')return;
+  if(tag==='SELECT'||tag==='OPTION'||tag==='TEXTAREA'||tag==='A')return;
+  if(tag==='INPUT'&&e.target.type!=='checkbox')return;
   if(e.target.isContentEditable)return;
   const b=e.target.closest('[data-action]');
   if(!b)return;
@@ -905,6 +977,15 @@ document.addEventListener('click',function(e){
     case 'view-project': openProjectModal(b.dataset.sh||'projects',pi); break;
     case 'add-doc': {const dsh=b.dataset.sh||'projects';const docName=prompt('Document name (e.g. Brand Guidelines, Wireframe Brief)');if(docName){const docUrl=prompt('Link / URL (optional)');if(!D[dsh][pi].docs)D[dsh][pi].docs=[];D[dsh][pi].docs.push({name:docName.trim(),url:fixUrl(docUrl||''),added:now()});D[dsh][pi].updated=now();markChanged();render();toast('Document added');}} break;
     case 'del-doc': {const ddsh=b.dataset.sh||'projects';const di=+b.dataset.di;if(confirm('Remove this document?')){D[ddsh][pi].docs.splice(di,1);D[ddsh][pi].updated=now();markChanged();render();}} break;
+    case 'add-meeting': {const mt=prompt('Meeting title (e.g. Design Review with CEO)');if(mt){const md=prompt('Date (YYYY-MM-DD)') || new Date().toISOString().slice(0,10);const ma=prompt('Attendees (e.g. Mark, CEO)');D.meetings.push({title:mt.trim(),date:md,attendees:ma||'',summary:'',notes:'',priority:'Standard',files:[],actionItems:[],updated:now()});markChanged();render();toast('Meeting added');}} break;
+    case 'del-meeting': if(confirm('Delete this meeting?')){D.meetings.splice(pi,1);expRow=-1;markChanged();render();} break;
+    case 'save-meeting-summary': {const ta=b.parentElement.querySelector('textarea');if(ta){D.meetings[pi].summary=ta.value;D.meetings[pi].updated=now();markChanged();toast('Summary saved');}} break;
+    case 'save-meeting-notes': {const nta=document.getElementById('meeting-notes-'+pi);if(nta){D.meetings[pi].notes=nta.value;D.meetings[pi].updated=now();markChanged();toast('Notes saved');}} break;
+    case 'add-meeting-file': {const fn=prompt('File name');if(fn){const fu=prompt('Link / URL (optional)');if(!D.meetings[pi].files)D.meetings[pi].files=[];D.meetings[pi].files.push({name:fn.trim(),url:fixUrl(fu||''),added:now()});D.meetings[pi].updated=now();markChanged();render();}} break;
+    case 'del-meeting-file': {const mfi=+b.dataset.fi;if(confirm('Remove file?')){D.meetings[pi].files.splice(mfi,1);D.meetings[pi].updated=now();markChanged();render();}} break;
+    case 'add-ai': {const ait=prompt('Action item');if(ait){const aia=prompt('Assigned to? (optional)');if(!D.meetings[pi].actionItems)D.meetings[pi].actionItems=[];D.meetings[pi].actionItems.push({task:ait.trim(),assignee:aia||'',done:false});D.meetings[pi].updated=now();markChanged();render();}} break;
+    case 'del-ai': {const aidx=+b.dataset.ai;if(confirm('Remove action item?')){D.meetings[pi].actionItems.splice(aidx,1);D.meetings[pi].updated=now();markChanged();render();}} break;
+    case 'toggle-ai': {const tidx=+b.dataset.ai;D.meetings[pi].actionItems[tidx].done=!D.meetings[pi].actionItems[tidx].done;D.meetings[pi].updated=now();markChanged();render();} break;
   }
 });
 document.querySelectorAll('.sb-item[data-v]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
@@ -932,6 +1013,7 @@ function render(){
   else if(view==='pipeline')mc.innerHTML=renderPipeline();
   else if(view==='review')mc.innerHTML=renderReviewHub();
   else if(view==='status')mc.innerHTML=renderStatusReport();
+  else if(view==='meetings')mc.innerHTML=renderMeetings();
   else if(VERTS.includes(view))mc.innerHTML=renderVert(view);
   else if(view==='quickfix')mc.innerHTML=renderQF();
   else if(view==='daily')mc.innerHTML=renderDT();
@@ -945,7 +1027,7 @@ function renderOverview(){
   VERTS.forEach(v=>{const items=all.filter(r=>r.dept===v),cnt=items.length,done=items.filter(r=>r.status==='Completed').length,prog=items.filter(r=>r.status==='In Progress').length,pct=cnt?Math.round(done/cnt*100):0,col=VCOL[v],tf=items.reduce((s,r)=>s+(r.files||[]).length,0),fa=items.reduce((s,r)=>s+(r.files||[]).filter(f=>f.approval==='Approved').length,0);
     cards+='<div class="ov-card" data-action="go" data-v="'+v+'"><div class="ov-bar" style="background:'+col+'"></div><h3>'+v+'</h3><div class="ov-stats"><span><strong>'+cnt+'</strong> projects</span><span><strong>'+done+'</strong> done</span><span><strong>'+prog+'</strong> active</span>'+(tf?'<span><strong>'+fa+'/'+tf+'</strong> files</span>':'')+'</div><div class="ov-prog"><div class="ov-fill" style="width:'+pct+'%;background:'+col+'"></div></div></div>';
   });
-  return '<div class="pg-h"><h1><span>Baroque Group</span> \u2014 Overview</h1><div class="tbar"><button class="btn btn-gold" data-action="open-add">+ Add Project</button><button class="btn btn-success" data-action="save-all">\u{1F4BE} Save</button></div></div>'+
+  return '<div class="pg-h"><h1><span>Baroque Group</span> \u2014 Overview</h1><div class="tbar"><button class="btn btn-gold" data-action="open-add">+ Add Project</button><button class="btn btn-success" data-action="save-all">Save</button></div></div>'+
     '<div class="stats-row"><div class="stat-card c-gold"><div class="sn">'+all.length+'</div><div class="sl">Total</div></div><div class="stat-card c-green"><div class="sn">'+all.filter(r=>r.status==='Completed').length+'</div><div class="sl">Completed</div></div><div class="stat-card c-blue"><div class="sn">'+all.filter(r=>r.status==='In Progress').length+'</div><div class="sl">In Progress</div></div><div class="stat-card"><div class="sn">'+af.length+'</div><div class="sl">Files</div></div><div class="stat-card c-green"><div class="sn">'+af.filter(f=>f.approval==='Approved').length+'</div><div class="sl">Approved</div></div><div class="stat-card c-orange"><div class="sn">'+af.filter(f=>f.approval!=='Approved'&&f.approval!=='Rejected').length+'</div><div class="sl">Pending</div></div></div>'+
     '<div class="ov-grid">'+cards+'</div>';
 }
@@ -1011,7 +1093,7 @@ function renderVert(dept){
         let fc='';
         f.forEach((fl,fi)=>{
           const apC=faCls(fl.approval||'Pending Review'),canA=fl.approval!=='Approved',canR=fl.approval!=='Rejected',canRev=fl.approval==='Approved';
-          fc+='<div class="file-card"><div class="fc-top"><span class="fc-icon">'+fIcon(fl.name)+'</span><span class="fc-name">'+E(fl.name)+'</span><span class="fa-badge '+apC+'">'+E(fl.approval||'Pending Review')+'</span>'+revCountBadge(fl)+(fl.url?'<span class="fc-link"><a href="'+E(fl.url)+'" target="_blank">Open</a></span>':'')+'</div>'+(fl.note?'<div class="fc-note">'+E(fl.note)+'</div>':'')+'<div class="fc-date">'+(fl.added?'Added '+E(fl.added):'')+(fl.reviewedAt?' \u00B7 '+E(fl.reviewedAt):'')+'</div>'+renderScreenshot(fl,'projects',i,fi)+renderRevHistory(fl)+'<div class="fc-actions">'+(canA?'<button class="btn-approve" data-action="approve-file" data-pi="'+i+'" data-fi="'+fi+'">Approve</button>':'')+(canRev?'<button class="btn-hold" data-action="revision-file" data-pi="'+i+'" data-fi="'+fi+'">\u{1F504} Request Revision</button>':'')+(canR?'<button class="btn-reject" data-action="reject-file" data-pi="'+i+'" data-fi="'+fi+'">Reject</button>':'')+'<button class="btn-edit" data-action="edit-file" data-pi="'+i+'" data-fi="'+fi+'">Edit</button><button class="btn-delete" data-action="del-file" data-pi="'+i+'" data-fi="'+fi+'">Delete</button></div></div>';
+          fc+='<div class="file-card"><div class="fc-top"><span class="fc-icon">'+fIcon(fl.name)+'</span><span class="fc-name">'+E(fl.name)+'</span><span class="fa-badge '+apC+'">'+E(fl.approval||'Pending Review')+'</span>'+revCountBadge(fl)+(fl.url?'<span class="fc-link"><a href="'+E(fl.url)+'" target="_blank">Open</a></span>':'')+'</div>'+(fl.note?'<div class="fc-note">'+E(fl.note)+'</div>':'')+'<div class="fc-date">'+(fl.added?'Added '+E(fl.added):'')+(fl.reviewedAt?' \u00B7 '+E(fl.reviewedAt):'')+'</div>'+renderScreenshot(fl,'projects',i,fi)+renderRevHistory(fl)+'<div class="fc-actions">'+(canA?'<button class="btn-approve" data-action="approve-file" data-pi="'+i+'" data-fi="'+fi+'">Approve</button>':'')+(canRev?'<button class="btn-hold" data-action="revision-file" data-pi="'+i+'" data-fi="'+fi+'">Request Revision</button>':'')+(canR?'<button class="btn-reject" data-action="reject-file" data-pi="'+i+'" data-fi="'+fi+'">Reject</button>':'')+'<button class="btn-edit" data-action="edit-file" data-pi="'+i+'" data-fi="'+fi+'">Edit</button><button class="btn-delete" data-action="del-file" data-pi="'+i+'" data-fi="'+fi+'">Delete</button></div></div>';
         });
         fc+='<div class="add-file-card" data-action="add-file" data-pi="'+i+'">+ Add File / Link</div>';
 
@@ -1028,7 +1110,7 @@ function renderVert(dept){
   });
   if(!items.length)rows='<tr><td colspan="18"><div class="empty-state"><p>No projects for '+dept+'</p><button class="btn btn-gold" data-action="open-add">+ Add Project</button></div></td></tr>';
 
-  return '<div class="vert-accent" style="background:'+col+'"></div><div class="pg-h"><h1><div class="vd" style="background:'+col+'"></div> '+dept+'</h1><div class="tbar"><button class="btn btn-gold" data-action="open-add">+ Add Project</button><button class="btn btn-success" data-action="save-all">\u{1F4BE} Save</button></div></div>'+
+  return '<div class="vert-accent" style="background:'+col+'"></div><div class="pg-h"><h1><div class="vd" style="background:'+col+'"></div> '+dept+'</h1><div class="tbar"><button class="btn btn-gold" data-action="open-add">+ Add Project</button><button class="btn btn-success" data-action="save-all">Save</button></div></div>'+
     '<div class="info-bar">Click a row to <strong>expand</strong> \u2014 shows edit controls, files, and notes. All dropdowns work directly.</div>'+
     '<div class="tw"><table><thead><tr><th></th><th>Type</th><th>Interface</th><th>Component</th><th>Stack</th><th>Live</th><th>Staging</th><th>Figma</th><th>Design%</th><th>Dev%</th><th>Alignment</th><th>Phase</th><th>Status</th><th>Owner</th><th>Target</th><th>Priority</th><th>Notes</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
@@ -1083,7 +1165,7 @@ function renderReviewHub(){
         const itemName=item.sub||item.task||'';const itemDept=item.dept||'';
         let acts='';
         if(tab==='pending')acts='<button class="btn-approve" data-action="approve-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Approve</button> <button class="btn-reject" data-action="reject-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Reject</button>';
-        else if(tab==='approved')acts='<button class="btn-hold" data-action="revision-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">\u{1F504} Request Revision</button> <button class="btn-reject" data-action="reject-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Reject</button>';
+        else if(tab==='approved')acts='<button class="btn-hold" data-action="revision-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Request Revision</button> <button class="btn-reject" data-action="reject-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Reject</button>';
         else if(tab==='revision')acts='<button class="btn-approve" data-action="approve-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Approve</button> <button class="btn-reject" data-action="reject-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Reject</button>';
         else acts='<button class="btn-approve" data-action="approve-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Approve</button>';
 
@@ -1150,7 +1232,7 @@ function renderQF(){
       let fc='';
       f.forEach((fl,fi)=>{
         const apC=faCls(fl.approval||'Pending Review'),canA=fl.approval!=='Approved',canR=fl.approval!=='Rejected',canRev=fl.approval==='Approved';
-        fc+='<div class="file-card"><div class="fc-top"><span class="fc-icon">'+fIcon(fl.name)+'</span><span class="fc-name">'+E(fl.name)+'</span><span class="fa-badge '+apC+'">'+E(fl.approval||'Pending Review')+'</span>'+revCountBadge(fl)+(fl.url?'<span class="fc-link"><a href="'+E(fl.url)+'" target="_blank">Open</a></span>':'')+'</div>'+(fl.note?'<div class="fc-note">'+E(fl.note)+'</div>':'')+'<div class="fc-date">'+(fl.added?'Added '+E(fl.added):'')+(fl.reviewedAt?' \u00B7 '+E(fl.reviewedAt):'')+'</div>'+renderScreenshot(fl,'quickfix',i,fi)+renderRevHistory(fl)+'<div class="fc-actions">'+(canA?'<button class="btn-approve" data-action="approve-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">Approve</button>':'')+(canRev?'<button class="btn-hold" data-action="revision-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">\u{1F504} Request Revision</button>':'')+(canR?'<button class="btn-reject" data-action="reject-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">Reject</button>':'')+'<button class="btn-edit" data-action="edit-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">Edit</button><button class="btn-delete" data-action="del-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">Delete</button></div></div>';
+        fc+='<div class="file-card"><div class="fc-top"><span class="fc-icon">'+fIcon(fl.name)+'</span><span class="fc-name">'+E(fl.name)+'</span><span class="fa-badge '+apC+'">'+E(fl.approval||'Pending Review')+'</span>'+revCountBadge(fl)+(fl.url?'<span class="fc-link"><a href="'+E(fl.url)+'" target="_blank">Open</a></span>':'')+'</div>'+(fl.note?'<div class="fc-note">'+E(fl.note)+'</div>':'')+'<div class="fc-date">'+(fl.added?'Added '+E(fl.added):'')+(fl.reviewedAt?' \u00B7 '+E(fl.reviewedAt):'')+'</div>'+renderScreenshot(fl,'quickfix',i,fi)+renderRevHistory(fl)+'<div class="fc-actions">'+(canA?'<button class="btn-approve" data-action="approve-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">Approve</button>':'')+(canRev?'<button class="btn-hold" data-action="revision-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">Request Revision</button>':'')+(canR?'<button class="btn-reject" data-action="reject-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">Reject</button>':'')+'<button class="btn-edit" data-action="edit-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">Edit</button><button class="btn-delete" data-action="del-file" data-sh="quickfix" data-pi="'+i+'" data-fi="'+fi+'">Delete</button></div></div>';
       });
       fc+='<div class="add-file-card" data-action="add-file" data-sh="quickfix" data-pi="'+i+'">+ Add File / Link</div>';
 
@@ -1165,7 +1247,7 @@ function renderQF(){
     }
   });
   if(!D.quickfix.length)rows='<tr><td colspan="9"><div class="empty-state"><p>No quick fix tasks</p><button class="btn btn-gold" data-action="open-add">+ Add Task</button></div></td></tr>';
-  return '<div class="pg-h"><h1><span>Quick Fix</span> Tasks</h1><div class="tbar"><button class="btn btn-gold" data-action="open-add">+ Add Task</button><button class="btn btn-success" data-action="save-all">\u{1F4BE} Save</button></div></div><div class="info-bar">Click a row to <strong>expand</strong> — shows files, priority, and approval. Each file can be <strong>approved or rejected</strong>.</div><div class="tw"><table><thead><tr><th></th><th>Task</th><th>Project</th><th>Department</th><th>Priority</th><th>Status</th><th>Files</th><th>Updated</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  return '<div class="pg-h"><h1><span>Quick Fix</span> Tasks</h1><div class="tbar"><button class="btn btn-gold" data-action="open-add">+ Add Task</button><button class="btn btn-success" data-action="save-all">Save</button></div></div><div class="info-bar">Click a row to <strong>expand</strong> — shows files, priority, and approval. Each file can be <strong>approved or rejected</strong>.</div><div class="tw"><table><thead><tr><th></th><th>Task</th><th>Project</th><th>Department</th><th>Priority</th><th>Status</th><th>Files</th><th>Updated</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 
 // === DAILY ===
@@ -1173,7 +1255,7 @@ function renderDT(){
   let rows='';D.daily.forEach((r,i)=>{const lk=!r._editing,ce=lk?'':'contenteditable="true"';const dd='data-sh="daily" data-pi="'+i+'"';
     rows+='<tr'+(r._editing?' class="editing"':'')+'><td><input type="checkbox" class="done-check" '+(r.done?'checked':'')+' data-action="toggle-done" data-pi="'+i+'"></td><td>'+(lk?'<span class="date-cell">'+(r.date||'\u2014')+'</span>':'<input type="date" style="padding:4px 8px;border:1px solid var(--border);border-radius:8px;font-size:12px" value="'+(r.date||'')+'">')+'</td><td '+ce+'>'+E(r.task||'')+'</td><td '+ce+'>'+E(r.dept||'')+'</td><td>'+mkSel(['High','Medium','Low'],r.priority||'Medium','data-type="priority" '+dd)+'</td><td>'+mkSel(STS,r.status||'Not Started','data-type="status" '+dd)+'</td><td class="date-cell">'+(r.updated||'\u2014')+'</td><td class="notes-cell"><div class="note-text" '+ce+'>'+E(r.notes||'')+'</div></td><td class="actions-col">'+(lk?'<button class="btn-edit" data-action="edit-dt" data-pi="'+i+'">Edit</button><button class="btn-delete" data-action="del-dt" data-pi="'+i+'">Del</button>':'<button class="btn-done" data-action="done-dt" data-pi="'+i+'">Done</button>')+'</td></tr>';
   });if(!D.daily.length)rows='<tr><td colspan="9"><div class="empty-state"><p>No daily tasks</p><button class="btn btn-gold" data-action="open-add">+ Add Task</button></div></td></tr>';
-  return '<div class="pg-h"><h1><span>Daily</span> Tasks</h1><div class="tbar"><button class="btn btn-gold" data-action="open-add">+ Add Task</button><button class="btn btn-success" data-action="save-all">\u{1F4BE} Save</button></div></div><div class="tw"><table><thead><tr><th style="width:40px">Done</th><th>Date</th><th>Task</th><th>Department</th><th>Priority</th><th>Status</th><th>Updated</th><th>Notes</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  return '<div class="pg-h"><h1><span>Daily</span> Tasks</h1><div class="tbar"><button class="btn btn-gold" data-action="open-add">+ Add Task</button><button class="btn btn-success" data-action="save-all">Save</button></div></div><div class="tw"><table><thead><tr><th style="width:40px">Done</th><th>Date</th><th>Task</th><th>Department</th><th>Priority</th><th>Status</th><th>Updated</th><th>Notes</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 
 // === READ ROWS ===
@@ -1207,6 +1289,7 @@ function updateBadges(){
   const pend=all.filter(r=>r.status==='For Approval'||r.status==='Revision Requested').length+allFiles.filter(f=>f.approval==='Pending Review'||f.approval==='Revision Requested').length;
   const el=document.getElementById('b-review');if(el)el.textContent=pend;
   const pe=document.getElementById('b-pipeline');if(pe)pe.textContent=D.projects.filter(r=>r.status!=='Completed').length;
+  const me=document.getElementById('b-meetings');if(me)me.textContent=D.meetings.length;
 }
 
 // === FILE MODAL ===
