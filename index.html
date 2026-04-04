@@ -943,6 +943,7 @@ document.addEventListener('click',function(e){
   if(tag==='SELECT'||tag==='OPTION'||tag==='TEXTAREA'||tag==='A')return;
   if(tag==='INPUT'&&e.target.type!=='checkbox')return;
   if(e.target.isContentEditable)return;
+  if(e.target.closest('a[href]'))return;
   const b=e.target.closest('[data-action]');
   if(!b)return;
   e.stopPropagation();
