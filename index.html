@@ -818,7 +818,7 @@ function resetIdleTimer(){
   if(!_hasUnsaved)return;
   _idleTimer=setTimeout(()=>{
     if(_hasUnsaved){showSavePrompt();}
-  },30000);
+  },90000);
 }
 
 function showSavePrompt(){
