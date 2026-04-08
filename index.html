@@ -964,6 +964,7 @@ document.addEventListener('click',function(e){
     case 'upload-screenshot': {const ush=b.dataset.sh,upi=pi,ufi=fi;const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=function(){const f=inp.files[0];if(!f)return;const reader=new FileReader();reader.onload=function(){handleScreenshot(ush,upi,ufi,reader.result);};reader.readAsDataURL(f);};inp.click();} break;
     case 'save-notes': {const ta=b.parentElement.querySelector('textarea');if(ta){D.projects[pi].notes=ta.value;D.projects[pi].updated=now();markChanged();render();toast('Notes saved');}} break;
     case 'save-notes-qf': {const ta=b.parentElement.querySelector('textarea');if(ta){D.quickfix[pi].notes=ta.value;D.quickfix[pi].updated=now();markChanged();render();toast('Notes saved');}} break;
+    case 'save-notes-dt': {const ta=b.parentElement.querySelector('textarea');if(ta){D.daily[pi].notes=ta.value;D.daily[pi].updated=now();markChanged();render();toast('Notes saved');}} break;
     case 'edit-qf': D.quickfix[pi]._editing=true; render(); break;
     case 'done-qf': readQFRow(pi);D.quickfix[pi]._editing=false;D.quickfix[pi].updated=now();markChanged();render(); break;
     case 'del-qf': if(confirm('Delete?')){D.quickfix.splice(pi,1);markChanged();render();} break;
@@ -1160,7 +1161,7 @@ function renderReviewHub(){
   });});
   if(ct.fst){
     // Files from projects AND quickfix — shown as detailed cards inside table
-    [['projects','Project'],['quickfix','Quick Fix']].forEach(([sh,label])=>{
+    [['projects','Project'],['quickfix','Quick Fix'],['daily','Daily']].forEach(([sh,label])=>{
       D[sh].forEach((item,pi)=>{(item.files||[]).forEach((f,fi)=>{
         if(f.approval!==ct.fst)return;
         const itemName=item.sub||item.task||'';const itemDept=item.dept||'';
@@ -1254,9 +1255,44 @@ function renderQF(){
 // === DAILY ===
 function renderDT(){
   let rows='';D.daily.forEach((r,i)=>{const lk=!r._editing,ce=lk?'':'contenteditable="true"';const dd='data-sh="daily" data-pi="'+i+'"';
-    rows+='<tr'+(r._editing?' class="editing"':'')+'><td><input type="checkbox" class="done-check" '+(r.done?'checked':'')+' data-action="toggle-done" data-pi="'+i+'"></td><td>'+(lk?'<span class="date-cell">'+(r.date||'\u2014')+'</span>':'<input type="date" style="padding:4px 8px;border:1px solid var(--border);border-radius:8px;font-size:12px" value="'+(r.date||'')+'">')+'</td><td '+ce+'>'+E(r.task||'')+'</td><td '+ce+'>'+E(r.dept||'')+'</td><td>'+mkSel(['High','Medium','Low'],r.priority||'Medium','data-type="priority" '+dd)+'</td><td>'+mkSel(STS,r.status||'Not Started','data-type="status" '+dd)+'</td><td class="date-cell">'+(r.updated||'\u2014')+'</td><td class="notes-cell"><div class="note-text" '+ce+'>'+E(r.notes||'')+'</div></td><td class="actions-col">'+(lk?'<button class="btn-edit" data-action="edit-dt" data-pi="'+i+'">Edit</button><button class="btn-delete" data-action="del-dt" data-pi="'+i+'">Del</button>':'<button class="btn-done" data-action="done-dt" data-pi="'+i+'">Done</button>')+'</td></tr>';
-  });if(!D.daily.length)rows='<tr><td colspan="9"><div class="empty-state"><p>No daily tasks</p><button class="btn btn-gold" data-action="open-add">+ Add Task</button></div></td></tr>';
-  return '<div class="pg-h"><h1><span>Daily</span> Tasks</h1><div class="tbar"><button class="btn btn-gold" data-action="open-add">+ Add Task</button><button class="btn btn-success" data-action="save-all">Save</button></div></div><div class="tw"><table><thead><tr><th style="width:40px">Done</th><th>Date</th><th>Task</th><th>Department</th><th>Priority</th><th>Status</th><th>Updated</th><th>Notes</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    if(!r.files)r.files=[];
+    const f=r.files,fA=f.filter(x=>x.approval==='Approved').length,fP=f.filter(x=>x.approval!=='Approved'&&x.approval!=='Rejected').length;
+    const isE=expSheet==='daily'&&expRow===i;
+    let fSum='';if(f.length){fSum='<span style="font-weight:700">'+f.length+'</span>';if(fA)fSum+=' <span style="color:var(--success);font-size:10px">'+fA+' ok</span>';if(fP)fSum+=' <span style="color:var(--warning);font-size:10px">'+fP+' pend</span>';}
+    fSum+=' <button data-action="add-file" data-sh="daily" data-pi="'+i+'" style="font-size:9px;font-weight:600;color:var(--gold);cursor:pointer;border:none;background:none;transform:none">+</button>';
+    rows+='<tr data-action="expand" data-sh="daily" data-pi="'+i+'" style="cursor:pointer"'+(r._editing?' class="editing"':'')+'>'
+      +'<td style="width:20px;text-align:center;color:var(--text-muted);font-size:10px">'+(isE?'\u25BC':'\u25B6')+'</td>'
+      +'<td><input type="checkbox" class="done-check" '+(r.done?'checked':'')+' data-action="toggle-done" data-pi="'+i+'"></td>'
+      +'<td>'+(lk?'<span class="date-cell">'+(r.date||'\u2014')+'</span>':'<input type="date" style="padding:4px 8px;border:1px solid var(--border);border-radius:8px;font-size:12px" value="'+(r.date||'')+'">')+'</td>'
+      +'<td '+ce+'>'+E(r.task||'')+'</td>'
+      +'<td '+ce+'>'+E(r.dept||'')+'</td>'
+      +'<td>'+mkSel(['High','Medium','Low'],r.priority||'Medium','data-type="priority" '+dd)+'</td>'
+      +'<td>'+mkSel(STS,r.status||'Not Started','data-type="status" '+dd)+'</td>'
+      +'<td>'+fSum+'</td>'
+      +'<td class="date-cell">'+(r.updated||'\u2014')+'</td>'
+      +'<td class="actions-col">'+(lk?'<button class="btn-edit" data-action="edit-dt" data-pi="'+i+'">Edit</button><button class="btn-delete" data-action="del-dt" data-pi="'+i+'">Del</button>':'<button class="btn-done" data-action="done-dt" data-pi="'+i+'">Done</button>')+'</td>'
+      +'</tr>';
+    if(isE){
+      let editRow='<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;padding:12px;background:var(--card);border-radius:10px;border:1px solid var(--border)">';
+      editRow+='<div><label style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:3px">Priority</label>'+mkSel(['High','Medium','Low'],r.priority||'Medium','data-type="priority" '+dd)+'</div>';
+      editRow+='<div><label style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:3px">Status</label>'+mkSel(STS,r.status||'Not Started','data-type="status" '+dd)+'</div>';
+      editRow+='<div style="display:flex;align-items:flex-end"><button class="btn-delete" data-action="del-dt" data-pi="'+i+'">Delete Task</button></div>';
+      editRow+='</div>';
+      let fc='';
+      f.forEach((fl,fi)=>{
+        const apC=faCls(fl.approval||'Pending Review'),canA=fl.approval!=='Approved',canR=fl.approval!=='Rejected',canRev=fl.approval==='Approved';
+        fc+='<div class="file-card"><div class="fc-top"><span class="fc-icon">'+fIcon(fl.name)+'</span><span class="fc-name">'+E(fl.name)+'</span><span class="fa-badge '+apC+'">'+E(fl.approval||'Pending Review')+'</span>'+revCountBadge(fl)+(fl.url?'<span class="fc-link"><a href="'+E(fl.url)+'" target="_blank">Open</a></span>':'')+'</div>'+(fl.note?'<div class="fc-note">'+E(fl.note)+'</div>':'')+'<div class="fc-date">'+(fl.added?'Added '+E(fl.added):'')+(fl.reviewedAt?' \u00B7 '+E(fl.reviewedAt):'')+'</div>'+renderScreenshot(fl,'daily',i,fi)+renderRevHistory(fl)+'<div class="fc-actions">'+(canA?'<button class="btn-approve" data-action="approve-file" data-sh="daily" data-pi="'+i+'" data-fi="'+fi+'">Approve</button>':'')+(canRev?'<button class="btn-hold" data-action="revision-file" data-sh="daily" data-pi="'+i+'" data-fi="'+fi+'">Request Revision</button>':'')+(canR?'<button class="btn-reject" data-action="reject-file" data-sh="daily" data-pi="'+i+'" data-fi="'+fi+'">Reject</button>':'')+'<button class="btn-edit" data-action="edit-file" data-sh="daily" data-pi="'+i+'" data-fi="'+fi+'">Edit</button><button class="btn-delete" data-action="del-file" data-sh="daily" data-pi="'+i+'" data-fi="'+fi+'">Delete</button></div></div>';
+      });
+      fc+='<div class="add-file-card" data-action="add-file" data-sh="daily" data-pi="'+i+'">+ Add File / Link</div>';
+      let dtdc='';const dtdocs=r.docs||[];
+      dtdocs.forEach((doc,di)=>{
+        dtdc+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:6px"><span style="font-size:16px">\u{1F4C4}</span><span style="flex:1;font-size:13px;font-weight:600">'+E(doc.name)+'</span>'+(doc.url?'<a href="'+E(doc.url)+'" target="_blank" style="font-size:11px;font-weight:600;color:var(--info);text-decoration:none;padding:3px 10px;border-radius:6px;background:var(--info-bg);border:1px solid #bfdbfe">Open</a>':'')+'<span style="font-size:10px;color:var(--text-muted)">'+E(doc.added||'')+'</span><button class="btn-delete" data-action="del-doc" data-sh="daily" data-pi="'+i+'" data-di="'+di+'">Remove</button></div>';
+      });
+      dtdc+='<div class="add-file-card" data-action="add-doc" data-sh="daily" data-pi="'+i+'" style="padding:10px">+ Add Supporting Document</div>';
+      rows+='<tr class="expand-row"><td colspan="10"><div class="expand-inner">'+editRow+'<h4>Files & Deliverables ('+f.length+')</h4><div class="file-cards">'+fc+'</div><h4 style="margin-top:16px">\u{1F4C2} Supporting Documents ('+dtdocs.length+')</h4><div style="margin-bottom:16px">'+dtdc+'</div><div class="expand-meta"><div class="expand-meta-block"><h4>Notes</h4><textarea class="expand-notes-area" data-sh="daily" data-pi="'+i+'">'+E(r.notes||'')+'</textarea><button class="btn btn-gold" style="margin-top:8px;padding:6px 16px;font-size:12px" data-action="save-notes-dt" data-pi="'+i+'">Save Notes</button></div></div></div></td></tr>';
+    }
+  });if(!D.daily.length)rows='<tr><td colspan="10"><div class="empty-state"><p>No daily tasks</p><button class="btn btn-gold" data-action="open-add">+ Add Task</button></div></td></tr>';
+  return '<div class="pg-h"><h1><span>Daily</span> Tasks</h1><div class="tbar"><button class="btn btn-gold" data-action="open-add">+ Add Task</button><button class="btn btn-success" data-action="save-all">Save</button></div></div><div class="info-bar">Click a row to <strong>expand</strong> — shows files, priority, and approval. Each file can be <strong>approved or rejected</strong>.</div><div class="tw"><table><thead><tr><th></th><th style="width:40px">Done</th><th>Date</th><th>Task</th><th>Department</th><th>Priority</th><th>Status</th><th>Files</th><th>Updated</th><th>Notes</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 
 // === READ ROWS ===
@@ -1277,7 +1313,7 @@ function readProjRow(i){const rows=document.querySelectorAll('tr[data-pi="'+i+'"
 function readQFRow(i){const rows=document.querySelectorAll('tr');let row;rows.forEach(r=>{const btns=r.querySelectorAll('[data-action="done-qf"][data-pi="'+i+'"]');if(btns.length)row=r;});if(!row)return;const c=row.querySelectorAll('td');const r=D.quickfix[i];
   r.task=c[0].textContent.trim();r.project=c[1].textContent.trim();r.dept=c[2].textContent.trim();r.link=c[3].textContent.trim();r.desc=c[4].textContent.trim();const nt=c[7].querySelector('.note-text');if(nt)r.notes=nt.textContent.trim();}
 function readDTRow(i){const rows=document.querySelectorAll('tr');let row;rows.forEach(r=>{const btns=r.querySelectorAll('[data-action="done-dt"][data-pi="'+i+'"]');if(btns.length)row=r;});if(!row)return;const c=row.querySelectorAll('td');const r=D.daily[i];
-  const di=c[1].querySelector('input[type="date"]');if(di)r.date=di.value;r.task=c[2].textContent.trim();r.dept=c[3].textContent.trim();const nt=c[7].querySelector('.note-text');if(nt)r.notes=nt.textContent.trim();}
+  const di=c[2].querySelector('input[type="date"]');if(di)r.date=di.value;r.task=c[3].textContent.trim();r.dept=c[4].textContent.trim();}
 
 // === BADGES ===
 function updateBadges(){
@@ -1286,7 +1322,7 @@ function updateBadges(){
   document.getElementById('b-qf').textContent=D.quickfix.length;
   document.getElementById('b-dt').textContent=D.daily.length;
   const all=[...D.projects,...D.quickfix,...D.daily];
-  const allFiles=[...D.projects,...D.quickfix].reduce((s,r)=>s.concat(r.files||[]),[]);
+  const allFiles=[...D.projects,...D.quickfix,...D.daily].reduce((s,r)=>s.concat(r.files||[]),[]);
   const pend=all.filter(r=>r.status==='For Approval'||r.status==='Revision Requested').length+allFiles.filter(f=>f.approval==='Pending Review'||f.approval==='Revision Requested').length;
   const el=document.getElementById('b-review');if(el)el.textContent=pend;
   const pe=document.getElementById('b-pipeline');if(pe)pe.textContent=D.projects.filter(r=>r.status!=='Completed').length;
@@ -1357,7 +1393,7 @@ document.getElementById('modalSubmitBtn').addEventListener('click',function(){
   } else if(view==='quickfix'){
     D.quickfix.push({task:gv('m-qf-task'),project:gv('m-qf-project'),dept:gv('m-qf-dept'),priority:gv('m-qf-pri')||'Standard',link:gv('m-qf-link'),desc:gv('m-qf-desc'),status:'Not Started',updated:now(),notes:gv('m-notes'),files:[]});
   } else if(view==='daily'){
-    D.daily.push({date:gv('m-dt-date'),task:gv('m-dt-task'),dept:gv('m-dt-dept'),priority:gv('m-dt-pri')||'Medium',status:'Not Started',updated:now(),done:false,notes:gv('m-notes')});
+    D.daily.push({date:gv('m-dt-date'),task:gv('m-dt-task'),dept:gv('m-dt-dept'),priority:gv('m-dt-pri')||'Medium',status:'Not Started',updated:now(),done:false,notes:gv('m-notes'),files:[]});
   }
   markChanged();document.getElementById('addModal').classList.remove('show');render();
 });
