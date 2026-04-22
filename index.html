@@ -849,7 +849,7 @@ async function save(){
 async function cloudSave(){
   if(_saving)return;
   const token=getGHToken();
-  if(!token){updateSyncStatus('saved-local');return;}
+  if(!token){updateSyncStatus('saved-local');toast('Set up cloud sync to save across browsers');return;}
   _saving=true;
   try{
     const res=await fetch('https://api.github.com/gists/'+GIST_ID,{
@@ -865,13 +865,12 @@ async function cloudSave(){
 
 async function cloudLoad(){
   const token=getGHToken();
-  if(!token){updateSyncStatus('ready');return;}
   try{
     updateSyncStatus('loading');
     const headers={'Accept':'application/vnd.github.v3+json'};
     if(token)headers['Authorization']='token '+token;
     const res=await fetch('https://api.github.com/gists/'+GIST_ID,{headers});
-    if(!res.ok){updateSyncStatus('ready');return;}
+    if(!res.ok){updateSyncStatus(token?'ready':'no-cloud');return;}
     const gist=await res.json();
     const file=gist.files&&gist.files[GIST_FILE];
     if(file&&file.content){
@@ -884,8 +883,8 @@ async function cloudLoad(){
         }
       }catch(e){}
     }
-    updateSyncStatus('ready');
-  }catch(e){updateSyncStatus('ready');}
+    updateSyncStatus(token?'ready':'no-cloud');
+  }catch(e){updateSyncStatus(token?'ready':'no-cloud');}
 }
 
 function exportData(){
