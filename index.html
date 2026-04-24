@@ -346,7 +346,7 @@ const OWNER_OPTS=['Designer','Developer','Both','PM','None'];
 
 let D={projects:[],quickfix:[],daily:[],meetings:[],customCats:[]};
 let view='overview',expRow=-1,expSheet='projects',fileTgt=-1,fileTgtSheet='projects',fileEditIdx=-1;
-window._reviewTab='pending';
+window._reviewTab='everything';
 
 function now(){const d=new Date();return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
 function E(s){if(!s)return '';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
@@ -974,7 +974,7 @@ document.addEventListener('click',function(e){
     case 'done-dt': readDTRow(pi);D.daily[pi]._editing=false;D.daily[pi].updated=now();markChanged();render(); break;
     case 'del-dt': if(confirm('Delete?')){D.daily.splice(pi,1);markChanged();render();} break;
     case 'toggle-done': D.daily[pi].done=!D.daily[pi].done;if(D.daily[pi].done)D.daily[pi].status='Completed';D.daily[pi].updated=now();markChanged();render(); break;
-    case 'chg-status': D[sh][pi].status=ns;D[sh][pi].updated=now();markChanged();render(); break;
+    case 'chg-status': D[sh][pi].status=ns;if(ns==='Completed'&&D[sh][pi].done!==undefined)D[sh][pi].done=true;if(ns!=='Completed'&&D[sh][pi].done!==undefined)D[sh][pi].done=false;D[sh][pi].updated=now();markChanged();render(); break;
     case 'open-add': openAddModal(); break;
     case 'save-all': save(); break;
     case 'review-tab': window._reviewTab=b.dataset.tab; render(); break;
@@ -1145,62 +1145,353 @@ function renderPipeline(){
 
 // === REVIEW HUB ===
 function renderReviewHub(){
-  const tab=window._reviewTab||'pending';
-  const tabs=[{k:'pending',label:'For Approval',st:'For Approval',fst:'Pending Review'},{k:'approved',label:'Approved',st:'Approved',fst:'Approved'},{k:'revision',label:'Revision Requested',st:'Revision Requested',fst:'Revision Requested'},{k:'rejected',label:'Rejected',st:'Rejected',fst:'Rejected'},{k:'onhold',label:'On Hold',st:'On Hold',fst:null}];
-  let th='<div class="review-tabs">';tabs.forEach(t=>{th+='<button class="review-tab'+(tab===t.k?' active':'')+'" data-action="review-tab" data-tab="'+t.k+'">'+t.label+'</button>';});th+='</div>';
-  const ct=tabs.find(t=>t.k===tab)||tabs[0];
-  let rows='';
+  const tab=window._reviewTab||'everything';
+
+  // Gather ALL items across all sheets
+  const all=[];
   ['projects','quickfix','daily'].forEach(sh=>{D[sh].forEach((r,i)=>{
-    if(r.status!==ct.st)return;
-    const src=sh==='projects'?'Projects':sh==='quickfix'?'Quick Fix':'Daily';const scl=sh==='projects'?'src-proj':sh==='quickfix'?'src-qf':'src-dt';
-    const item=r.sub||r.task||'\u2014',detail=r.desc||r.scope||'';
-    let acts='';
-    if(tab==='pending')acts='<button class="btn-approve" data-action="chg-status" data-sh="'+sh+'" data-pi="'+i+'" data-ns="Approved">Approve</button> <button class="btn-reject" data-action="chg-status" data-sh="'+sh+'" data-pi="'+i+'" data-ns="Rejected">Reject</button> <button class="btn-hold" data-action="chg-status" data-sh="'+sh+'" data-pi="'+i+'" data-ns="On Hold">Hold</button>';
-    else if(tab==='onhold')acts='<button class="btn-approve" data-action="chg-status" data-sh="'+sh+'" data-pi="'+i+'" data-ns="In Progress">Resume</button>';
-    else if(tab==='revision')acts='<button class="btn-approve" data-action="chg-status" data-sh="'+sh+'" data-pi="'+i+'" data-ns="In Progress">Back to Work</button>';
-    else acts='<button class="btn-edit" data-action="chg-status" data-sh="'+sh+'" data-pi="'+i+'" data-ns="In Progress">Reopen</button>';
-    rows+='<tr><td><span class="source-badge '+scl+'">'+src+'</span></td><td><strong>'+E(item)+'</strong></td><td>'+E(r.dept||'')+'</td><td>'+E(detail)+'</td><td>'+statusBadge(r.status)+'</td><td class="date-cell">'+(r.updated||'\u2014')+'</td><td style="text-align:center;white-space:nowrap"><button class="btn-view" data-action="view-project" data-sh="'+sh+'" data-pi="'+i+'">View</button> '+acts+'</td></tr>';
+    all.push({r,sh,pi:i,type:sh==='projects'?'Project':sh==='quickfix'?'Quick Fix':'Daily',name:r.sub||r.task||'Untitled',dept:r.dept||'',detail:r.desc||r.scope||''});
   });});
-  if(ct.fst){
-    // Files from projects AND quickfix — shown as detailed cards inside table
-    [['projects','Project'],['quickfix','Quick Fix'],['daily','Daily']].forEach(([sh,label])=>{
-      D[sh].forEach((item,pi)=>{(item.files||[]).forEach((f,fi)=>{
-        if(f.approval!==ct.fst)return;
-        const itemName=item.sub||item.task||'';const itemDept=item.dept||'';
-        let acts='';
-        if(tab==='pending')acts='<button class="btn-approve" data-action="approve-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Approve</button> <button class="btn-reject" data-action="reject-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Reject</button>';
-        else if(tab==='approved')acts='<button class="btn-hold" data-action="revision-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Request Revision</button> <button class="btn-reject" data-action="reject-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Reject</button>';
-        else if(tab==='revision')acts='<button class="btn-approve" data-action="approve-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Approve</button> <button class="btn-reject" data-action="reject-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Reject</button>';
-        else acts='<button class="btn-approve" data-action="approve-file" data-sh="'+sh+'" data-pi="'+pi+'" data-fi="'+fi+'">Approve</button>';
 
-        // File card with full details
-        let fileView='<div style="display:flex;align-items:flex-start;gap:10px">'
-          +'<span style="font-size:20px">'+fIcon(f.name)+'</span>'
-          +'<div style="flex:1;min-width:0">'
-            +'<strong style="font-size:13px">'+E(f.name)+'</strong>'+revCountBadge(f)
-            +'<div style="font-size:11px;color:var(--text-sec);margin-top:2px">'+E(itemName)+' \u2022 '+E(itemDept)+' <span style="font-size:10px;opacity:.6">('+label+')</span></div>'
-            +(f.note?'<div style="font-size:12px;color:var(--text);margin-top:6px;padding:6px 10px;background:var(--bg);border-radius:6px;border:1px solid var(--border);white-space:normal;line-height:1.5">'+E(f.note)+'</div>':'')
-            +renderRevHistory(f)
-          +'</div>'
-          +'</div>';
+  // Gather ALL files
+  const allFiles=[];
+  ['projects','quickfix','daily'].forEach(sh=>{D[sh].forEach((item,pi)=>{(item.files||[]).forEach((f,fi)=>{
+    allFiles.push({f,item,sh,pi,fi,parentName:item.sub||item.task||''});
+  });});});
 
-        let fileLink='';
-        if(f.url){fileLink='<a href="'+E(f.url)+'" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--info);text-decoration:none;padding:6px 14px;border-radius:8px;background:var(--info-bg);border:1px solid #bfdbfe;white-space:nowrap">\u{1F517} Open File</a>';}
-        else{fileLink='<span style="font-size:11px;color:var(--text-muted)">No link attached</span>';}
+  // Counts
+  const cOverdue=all.filter(x=>{const r=x.r;if(r.done||r.status==='Completed')return false;if(r.deadline){const dl=new Date(r.deadline),n=new Date();n.setHours(0,0,0,0);dl.setHours(0,0,0,0);return dl<n;}if(r.target){const tl=new Date(r.target),n=new Date();n.setHours(0,0,0,0);tl.setHours(0,0,0,0);return tl<n;}return false;});
+  const cInProg=all.filter(x=>x.r.status==='In Progress');
+  const cForApproval=all.filter(x=>x.r.status==='For Approval');
+  const cNotStarted=all.filter(x=>x.r.status==='Not Started');
+  const cCompleted=all.filter(x=>x.r.status==='Completed');
+  const cOnHold=all.filter(x=>x.r.status==='On Hold');
+  const cRevision=all.filter(x=>x.r.status==='Revision Requested');
+  const cPendingFiles=allFiles.filter(x=>x.f.approval==='Pending Review');
+  const cRevFiles=allFiles.filter(x=>x.f.approval==='Revision Requested');
+  const cApprovedFiles=allFiles.filter(x=>x.f.approval==='Approved');
+  const cUrgent=all.filter(x=>x.r.priority==='Urgent'&&x.r.status!=='Completed');
+  const cHigh=all.filter(x=>x.r.priority==='High'&&x.r.status!=='Completed');
 
-        rows+='<tr>'
-          +'<td><span class="source-badge" style="background:var(--gold-bg);color:var(--gold)">File</span></td>'
-          +'<td colspan="2" style="white-space:normal">'+fileView+'</td>'
-          +'<td>'+fileLink+'</td>'
-          +'<td><span class="fa-badge '+faCls(f.approval)+'">'+E(f.approval)+'</span></td>'
-          +'<td class="date-cell">'+(f.added||'')+(f.reviewedAt?'<br>'+E(f.reviewedAt):'')+'</td>'
-          +'<td style="text-align:center;white-space:nowrap"><button class="btn-view" data-action="view-project" data-sh="'+sh+'" data-pi="'+pi+'">View</button> '+acts+'</td>'
-          +'</tr>';
-      });});
+  // Tabs
+  const tabs=[
+    {k:'everything',label:'Everything'},
+    {k:'timeline',label:'Timeline'},
+    {k:'pending',label:'For Approval ('+cForApproval.length+')'},
+    {k:'inprogress',label:'In Progress ('+cInProg.length+')'},
+    {k:'notstarted',label:'Not Started ('+cNotStarted.length+')'},
+    {k:'revision',label:'Revisions ('+cRevision.length+')'},
+    {k:'completed',label:'Completed ('+cCompleted.length+')'},
+    {k:'onhold',label:'On Hold ('+cOnHold.length+')'}
+  ];
+  let th='<div class="review-tabs">';tabs.forEach(t=>{th+='<button class="review-tab'+(tab===t.k?' active':'')+'" data-action="review-tab" data-tab="'+t.k+'">'+t.label+'</button>';});th+='</div>';
+
+  if(tab!=='everything'){
+    // Filtered table view (existing behavior)
+    const stMap={'pending':'For Approval','inprogress':'In Progress','notstarted':'Not Started','revision':'Revision Requested','completed':'Completed','onhold':'On Hold'};
+    const fstMap={'pending':'Pending Review','inprogress':null,'notstarted':null,'revision':'Revision Requested','completed':null,'onhold':null};
+    const targetSt=stMap[tab]||'';
+    const targetFst=fstMap[tab]||null;
+    let rows='';
+    all.forEach(x=>{
+      if(x.r.status!==targetSt)return;
+      let acts='';
+      if(tab==='pending')acts='<button class="btn-approve" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="Approved">Approve</button> <button class="btn-reject" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="Rejected">Reject</button> <button class="btn-hold" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="On Hold">Hold</button>';
+      else if(tab==='onhold')acts='<button class="btn-approve" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="In Progress">Resume</button>';
+      else if(tab==='revision')acts='<button class="btn-approve" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="In Progress">Back to Work</button>';
+      else acts='<button class="btn-edit" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="In Progress">Reopen</button>';
+      const scl=x.sh==='projects'?'src-proj':x.sh==='quickfix'?'src-qf':'src-dt';
+      rows+='<tr><td><span class="source-badge '+scl+'">'+x.type+'</span></td><td><strong>'+E(x.name)+'</strong></td><td>'+E(x.dept)+'</td><td>'+E(x.detail)+'</td><td>'+statusBadge(x.r.status)+'</td><td>'+priBadge(x.r.priority)+'</td><td class="date-cell">'+(x.r.updated||'\u2014')+'</td><td style="text-align:center;white-space:nowrap"><button class="btn-view" data-action="view-project" data-sh="'+x.sh+'" data-pi="'+x.pi+'">View</button> '+acts+'</td></tr>';
     });
+    if(targetFst){
+      allFiles.forEach(x=>{
+        if(x.f.approval!==targetFst)return;
+        let acts='';
+        if(tab==='pending')acts='<button class="btn-approve" data-action="approve-file" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-fi="'+x.fi+'">Approve</button> <button class="btn-reject" data-action="reject-file" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-fi="'+x.fi+'">Reject</button>';
+        else if(tab==='revision')acts='<button class="btn-approve" data-action="approve-file" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-fi="'+x.fi+'">Approve</button>';
+        else acts='';
+        rows+='<tr><td><span class="source-badge" style="background:var(--gold-bg);color:var(--gold)">File</span></td><td><strong>'+E(x.f.name)+'</strong>'+revCountBadge(x.f)+'</td><td>'+E(x.item.dept||'')+'</td><td style="font-size:11px;color:var(--text-sec)">'+E(x.parentName)+'</td><td><span class="fa-badge '+faCls(x.f.approval)+'">'+E(x.f.approval)+'</span></td><td></td><td class="date-cell">'+(x.f.added||'')+'</td><td style="text-align:center;white-space:nowrap"><button class="btn-view" data-action="view-project" data-sh="'+x.sh+'" data-pi="'+x.pi+'">View</button> '+acts+'</td></tr>';
+      });
+    }
+    if(!rows)rows='<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted)">No items</td></tr>';
+    return '<div class="pg-h"><h1><span>Review Board</span></h1><div class="tbar"><button class="btn btn-success" data-action="save-all">Save</button></div></div>'+th+'<div class="tw"><table><thead><tr><th>Source</th><th>Item</th><th>Department</th><th>Details</th><th>Status</th><th>Priority</th><th>Date</th><th style="width:200px;text-align:center">Actions</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   }
-  if(!rows)rows='<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">No items</td></tr>';
-  return '<div class="pg-h"><h1><span>Review Board</span></h1></div>'+th+'<div class="tw"><table><thead><tr><th>Source</th><th>Item</th><th>Department</th><th>Details</th><th>Status</th><th>Date</th><th style="width:200px;text-align:center">Actions</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+
+  // === TIMELINE VIEW ===
+  if(tab==='timeline'){
+    let h='<div class="pg-h"><h1><span>Review Board</span> \u2014 Timeline</h1><div class="tbar"><button class="btn btn-success" data-action="save-all">Save</button></div></div>';
+    h+=th;
+
+    // Date helpers
+    const today=new Date();today.setHours(0,0,0,0);
+    const dayOfWeek=today.getDay();
+    const endOfWeek=new Date(today);endOfWeek.setDate(today.getDate()+(7-dayOfWeek));
+    const startNextWeek=new Date(endOfWeek);
+    const endNextWeek=new Date(startNextWeek);endNextWeek.setDate(startNextWeek.getDate()+7);
+    const endOfMonth=new Date(today.getFullYear(),today.getMonth()+1,0);endOfMonth.setHours(23,59,59);
+
+    // Active items (not completed)
+    const active=all.filter(x=>x.r.status!=='Completed'&&!x.r.done);
+    const finished=all.filter(x=>x.r.status==='Completed'||x.r.done);
+
+    // Sort into buckets by deadline/target
+    const overdue=[],thisWeek=[],nextWeek=[],thisMonth=[],later=[],noDate=[];
+    active.forEach(x=>{
+      const dl=x.r.deadline||x.r.target||'';
+      if(!dl){noDate.push(x);return;}
+      const d=new Date(dl);d.setHours(0,0,0,0);
+      if(d<today)overdue.push(x);
+      else if(d<=endOfWeek)thisWeek.push(x);
+      else if(d<=endNextWeek)nextWeek.push(x);
+      else if(d<=endOfMonth)thisMonth.push(x);
+      else later.push(x);
+    });
+
+    // Sort each bucket by date
+    const sortByDate=(a,b)=>{const da=a.r.deadline||a.r.target||'',db=b.r.deadline||b.r.target||'';return da.localeCompare(db);};
+    [overdue,thisWeek,nextWeek,thisMonth,later].forEach(arr=>arr.sort(sortByDate));
+    // Sort finished by updated desc
+    finished.sort((a,b)=>(b.r.updated||'').localeCompare(a.r.updated||''));
+
+    // Summary
+    h+='<div class="stats-row">';
+    h+='<div class="stat-card c-red"><div class="sn">'+overdue.length+'</div><div class="sl">Overdue</div></div>';
+    h+='<div class="stat-card c-orange"><div class="sn">'+thisWeek.length+'</div><div class="sl">This Week</div></div>';
+    h+='<div class="stat-card c-blue"><div class="sn">'+nextWeek.length+'</div><div class="sl">Next Week</div></div>';
+    h+='<div class="stat-card c-purple"><div class="sn">'+thisMonth.length+'</div><div class="sl">This Month</div></div>';
+    h+='<div class="stat-card"><div class="sn">'+later.length+'</div><div class="sl">Later</div></div>';
+    h+='<div class="stat-card"><div class="sn">'+noDate.length+'</div><div class="sl">No Date</div></div>';
+    h+='<div class="stat-card c-green"><div class="sn">'+finished.length+'</div><div class="sl">Finished</div></div>';
+    h+='</div>';
+
+    // Timeline item renderer
+    function tlItem(x){
+      const r=x.r,col=VCOL[x.dept]||'var(--gold)';
+      const dl=r.deadline||r.target||'';
+      const scl=x.sh==='projects'?'src-proj':x.sh==='quickfix'?'src-qf':'src-dt';
+      const f=r.files||[],fA=f.filter(z=>z.approval==='Approved').length,fP=f.filter(z=>z.approval==='Pending Review').length;
+      const isDone=r.status==='Completed'||r.done;
+      let c='<div style="display:flex;align-items:flex-start;gap:14px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px;border-left:4px solid '+col+';cursor:pointer;transition:all .15s'+(isDone?';opacity:.55':'')+';" data-action="view-project" data-sh="'+x.sh+'" data-pi="'+x.pi+'">';
+      // Left: date column
+      c+='<div style="min-width:70px;text-align:center;flex-shrink:0">';
+      if(dl){const dd=new Date(dl);c+='<div style="font-size:20px;font-weight:800;color:'+(isDone?'var(--success)':'var(--text)')+'">'+dd.getDate()+'</div><div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase">'+dd.toLocaleString('en',{month:'short',year:'numeric'})+'</div>';}
+      else{c+='<div style="font-size:12px;color:var(--text-muted)">No date</div>';}
+      c+='</div>';
+      // Right: content
+      c+='<div style="flex:1;min-width:0">';
+      c+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap"><span class="source-badge '+scl+'" style="font-size:9px">'+x.type+'</span>'+statusBadge(r.status)+priBadge(r.priority)+'</div>';
+      c+='<div style="font-size:14px;font-weight:700;color:var(--text);'+(isDone?'text-decoration:line-through;':'')+'">'+E(x.name)+'</div>';
+      c+='<div style="font-size:12px;color:var(--text-sec);margin-top:2px">'+E(x.dept)+(x.detail?' \u2022 '+E(x.detail):'')+'</div>';
+      if(f.length)c+='<div style="margin-top:6px;font-size:11px;color:var(--text-sec)"><span style="font-weight:700">'+f.length+'</span> files'+(fA?' \u2022 <span style="color:var(--success);font-weight:600">'+fA+' approved</span>':'')+(fP?' \u2022 <span style="color:var(--warning);font-weight:600">'+fP+' pending</span>':'')+'</div>';
+      c+='</div>';
+      // Right: actions
+      c+='<div style="flex-shrink:0;display:flex;gap:4px;align-items:center">';
+      if(!isDone){
+        c+='<button class="btn-done" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="Completed" style="font-size:10px;padding:5px 10px">Done</button>';
+      } else {
+        c+='<button class="btn-edit" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="In Progress" style="font-size:10px;padding:5px 10px">Reopen</button>';
+      }
+      c+='</div>';
+      c+='</div>';
+      return c;
+    }
+
+    // Section helper
+    function tlSection(icon,title,count,color,items,collapsed){
+      if(!items.length)return '';
+      let s='<div style="margin-bottom:24px">';
+      s+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--border)">';
+      s+='<span style="font-size:16px">'+icon+'</span>';
+      s+='<span style="font-size:15px;font-weight:700;color:var(--text)">'+title+'</span>';
+      s+='<span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;background:'+(color||'var(--bg)')+';color:var(--text-sec)">'+count+'</span>';
+      s+='</div>';
+      s+='<div style="display:flex;flex-direction:column;gap:8px">';
+      const show=collapsed?items.slice(0,5):items;
+      show.forEach(x=>{s+=tlItem(x);});
+      if(collapsed&&items.length>5)s+='<div style="text-align:center;font-size:12px;color:var(--text-muted);padding:10px">+ '+(items.length-5)+' more</div>';
+      s+='</div></div>';
+      return s;
+    }
+
+    // Render sections
+    h+=tlSection('\u{1F6A8}','Overdue',overdue.length,'var(--danger-bg)',overdue,false);
+    h+=tlSection('\u{1F4C5}','This Week',thisWeek.length,'var(--warning-bg)',thisWeek,false);
+    h+=tlSection('\u{1F4C6}','Next Week',nextWeek.length,'var(--info-bg)',nextWeek,false);
+    h+=tlSection('\u{1F5D3}\uFE0F','This Month',thisMonth.length,'var(--purple-bg)',thisMonth,false);
+    h+=tlSection('\u{1F4AD}','Later',later.length,'var(--bg)',later,true);
+    if(noDate.length){h+=tlSection('\u2753','No Deadline Set',noDate.length,'var(--bg)',noDate,true);}
+    h+=tlSection('\u2705','Finished',finished.length,'var(--success-bg)',finished,true);
+
+    return h;
+  }
+
+  // === EVERYTHING VIEW ===
+  let h='<div class="pg-h"><h1><span>Review Board</span></h1><div class="tbar"><button class="btn btn-success" data-action="save-all">Save</button></div></div>';
+  h+=th;
+
+  // Summary stats
+  h+='<div class="stats-row">';
+  h+='<div class="stat-card c-red"><div class="sn">'+cOverdue.length+'</div><div class="sl">Overdue</div></div>';
+  h+='<div class="stat-card c-orange"><div class="sn">'+cInProg.length+'</div><div class="sl">In Progress</div></div>';
+  h+='<div class="stat-card c-purple"><div class="sn">'+(cForApproval.length+cPendingFiles.length)+'</div><div class="sl">Awaiting Approval</div></div>';
+  h+='<div class="stat-card"><div class="sn">'+cNotStarted.length+'</div><div class="sl">Not Started</div></div>';
+  h+='<div class="stat-card c-red"><div class="sn">'+(cRevision.length+cRevFiles.length)+'</div><div class="sl">Revisions</div></div>';
+  h+='<div class="stat-card c-green"><div class="sn">'+cCompleted.length+'</div><div class="sl">Completed</div></div>';
+  h+='<div class="stat-card c-blue"><div class="sn">'+allFiles.length+'</div><div class="sl">Total Files</div></div>';
+  h+='<div class="stat-card c-green"><div class="sn">'+cApprovedFiles.length+'</div><div class="sl">Files Approved</div></div>';
+  h+='</div>';
+
+  // Helper to render an item card
+  function itemCard(x,showActions){
+    const r=x.r,col=VCOL[x.dept]||'var(--gold)';
+    const f=r.files||[],fA=f.filter(z=>z.approval==='Approved').length,fP=f.filter(z=>z.approval==='Pending Review').length;
+    const scl=x.sh==='projects'?'src-proj':x.sh==='quickfix'?'src-qf':'src-dt';
+    let deadlineStr='';
+    const dl=r.deadline||r.target||'';
+    if(dl){const dd=new Date(dl),n2=new Date();n2.setHours(0,0,0,0);dd.setHours(0,0,0,0);const diff=Math.ceil((dd-n2)/86400000);
+      if(r.status!=='Completed'&&!r.done){if(diff<0)deadlineStr='<span style="color:var(--danger);font-weight:700;font-size:10px;background:var(--danger-bg);padding:2px 7px;border-radius:5px">'+Math.abs(diff)+'d overdue</span>';
+      else if(diff===0)deadlineStr='<span style="color:var(--warning);font-weight:700;font-size:10px;background:var(--warning-bg);padding:2px 7px;border-radius:5px">Due today</span>';
+      else if(diff<=3)deadlineStr='<span style="color:var(--orange);font-weight:700;font-size:10px;background:var(--orange-bg);padding:2px 7px;border-radius:5px">'+diff+'d left</span>';
+      else deadlineStr='<span style="font-size:10px;color:var(--text-muted)">'+dl+'</span>';}}
+    let acts='';
+    if(showActions){
+      if(r.status==='For Approval')acts='<button class="btn-approve" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="Approved">Approve</button> <button class="btn-reject" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="Rejected">Reject</button> <button class="btn-hold" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="On Hold">Hold</button>';
+      else if(r.status==='Revision Requested')acts='<button class="btn-approve" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="In Progress">Back to Work</button>';
+      else if(r.status==='On Hold')acts='<button class="btn-approve" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="In Progress">Resume</button>';
+    }
+    let c='<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;border-left:4px solid '+col+';cursor:pointer;transition:all .15s" data-action="view-project" data-sh="'+x.sh+'" data-pi="'+x.pi+'">';
+    c+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap"><span class="source-badge '+scl+'" style="font-size:9px">'+x.type+'</span>'+statusBadge(r.status)+priBadge(r.priority)+deadlineStr+'</div>';
+    c+='<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">'+E(x.name)+'</div>';
+    c+='<div style="font-size:12px;color:var(--text-sec)">'+E(x.dept)+(x.detail?' \u2022 '+E(x.detail):'')+'</div>';
+    if(f.length)c+='<div style="margin-top:8px;font-size:11px;color:var(--text-sec)"><span style="font-weight:700">'+f.length+'</span> files'+(fA?' \u2022 <span style="color:var(--success);font-weight:600">'+fA+' approved</span>':'')+(fP?' \u2022 <span style="color:var(--warning);font-weight:600">'+fP+' pending</span>':'')+'</div>';
+    if(acts)c+='<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">'+acts+'</div>';
+    c+='</div>';
+    return c;
+  }
+
+  // Helper to render a file card
+  function fileCard(x){
+    const col=VCOL[x.item.dept]||'var(--gold)';
+    let acts='';
+    if(x.f.approval==='Pending Review')acts='<button class="btn-approve" data-action="approve-file" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-fi="'+x.fi+'">Approve</button> <button class="btn-reject" data-action="reject-file" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-fi="'+x.fi+'">Reject</button>';
+    else if(x.f.approval==='Approved')acts='<button class="btn-hold" data-action="revision-file" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-fi="'+x.fi+'">Request Revision</button>';
+    else if(x.f.approval==='Revision Requested')acts='<button class="btn-approve" data-action="approve-file" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-fi="'+x.fi+'">Approve</button> <button class="btn-reject" data-action="reject-file" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-fi="'+x.fi+'">Reject</button>';
+    else if(x.f.approval==='Rejected')acts='<button class="btn-approve" data-action="approve-file" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-fi="'+x.fi+'">Re-approve</button>';
+    let c='<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;border-left:4px solid '+col+'">';
+    c+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:16px">'+fIcon(x.f.name)+'</span><strong style="font-size:13px">'+E(x.f.name)+'</strong>'+revCountBadge(x.f)+'<span class="fa-badge '+faCls(x.f.approval)+'" style="margin-left:auto">'+E(x.f.approval)+'</span></div>';
+    c+='<div style="font-size:11px;color:var(--text-sec)">'+E(x.parentName)+' \u2022 '+E(x.item.dept||'')+'</div>';
+    if(x.f.note)c+='<div style="font-size:12px;color:var(--text);margin-top:6px;padding:6px 10px;background:var(--bg);border-radius:6px;border:1px solid var(--border-light);white-space:normal;line-height:1.5">'+E(x.f.note)+'</div>';
+    if(x.f.url)c+='<div style="margin-top:6px"><a href="'+E(x.f.url)+'" target="_blank" style="font-size:11px;font-weight:600;color:var(--info);text-decoration:none;padding:4px 12px;border-radius:6px;background:var(--info-bg)">\u{1F517} Open</a></div>';
+    if(acts)c+='<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">'+acts+'</div>';
+    c+='</div>';
+    return c;
+  }
+
+  // Section helper
+  function section(icon,title,count,color,content){
+    if(!content)return '';
+    return '<div class="sr-card"><h3 style="display:flex;align-items:center;gap:8px;margin-bottom:14px">'+icon+' '+title+' <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;background:'+(color||'var(--bg)')+';color:var(--text-sec)">'+count+'</span></h3>'+content+'</div>';
+  }
+
+  // 1. OVERDUE — what you need to finish NOW
+  if(cOverdue.length){
+    let s='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px">';
+    cOverdue.forEach(x=>{s+=itemCard(x,true);});
+    s+='</div>';
+    h+=section('\u{1F6A8}','Overdue \u2014 Finish Now',cOverdue.length,'var(--danger-bg)',s);
+  }
+
+  // 2. FOR APPROVAL — projects + files waiting for approval
+  if(cForApproval.length||cPendingFiles.length){
+    let s='';
+    if(cForApproval.length){
+      s+='<div style="font-size:11px;font-weight:700;color:var(--text-sec);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">Projects / Tasks ('+cForApproval.length+')</div>';
+      s+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-bottom:16px">';
+      cForApproval.forEach(x=>{s+=itemCard(x,true);});
+      s+='</div>';
+    }
+    if(cPendingFiles.length){
+      s+='<div style="font-size:11px;font-weight:700;color:var(--text-sec);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">Files Pending Review ('+cPendingFiles.length+')</div>';
+      s+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px">';
+      cPendingFiles.forEach(x=>{s+=fileCard(x);});
+      s+='</div>';
+    }
+    h+=section('\u23F3','Awaiting Approval',cForApproval.length+cPendingFiles.length,'var(--purple-bg)',s);
+  }
+
+  // 3. REVISION REQUESTED
+  if(cRevision.length||cRevFiles.length){
+    let s='';
+    if(cRevision.length){
+      s+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-bottom:12px">';
+      cRevision.forEach(x=>{s+=itemCard(x,true);});
+      s+='</div>';
+    }
+    if(cRevFiles.length){
+      s+='<div style="font-size:11px;font-weight:700;color:var(--text-sec);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;margin-top:8px">Files needing revision ('+cRevFiles.length+')</div>';
+      s+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px">';
+      cRevFiles.forEach(x=>{s+=fileCard(x);});
+      s+='</div>';
+    }
+    h+=section('\u{1F504}','Revision Requested',cRevision.length+cRevFiles.length,'var(--danger-bg)',s);
+  }
+
+  // 4. IN PROGRESS — what you're working on
+  if(cInProg.length){
+    let s='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px">';
+    cInProg.forEach(x=>{s+=itemCard(x,false);});
+    s+='</div>';
+    h+=section('\u{1F3AF}','In Progress',cInProg.length,'var(--info-bg)',s);
+  }
+
+  // 5. PRIORITY PIPELINE — Urgent + High not completed
+  if(cUrgent.length||cHigh.length){
+    let s='';
+    if(cUrgent.length){
+      s+='<div style="font-size:11px;font-weight:700;color:var(--danger);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">Urgent ('+cUrgent.length+')</div>';
+      s+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-bottom:16px">';
+      cUrgent.forEach(x=>{s+=itemCard(x,false);});
+      s+='</div>';
+    }
+    if(cHigh.length){
+      s+='<div style="font-size:11px;font-weight:700;color:var(--warning);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">High Priority ('+cHigh.length+')</div>';
+      s+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px">';
+      cHigh.forEach(x=>{s+=itemCard(x,false);});
+      s+='</div>';
+    }
+    h+=section('\u{1F525}','Priority Pipeline',cUrgent.length+cHigh.length,'var(--warning-bg)',s);
+  }
+
+  // 6. NOT STARTED — what's in the pipeline
+  if(cNotStarted.length){
+    let s='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px">';
+    // Sort by priority: Urgent first, then High, then Standard
+    const priOrder={'Urgent':0,'High':1,'Standard':2};
+    const sorted=[...cNotStarted].sort((a,b)=>(priOrder[a.r.priority]||2)-(priOrder[b.r.priority]||2));
+    sorted.forEach(x=>{s+=itemCard(x,false);});
+    s+='</div>';
+    h+=section('\u{1F4CB}','Not Started \u2014 Pipeline',cNotStarted.length,'var(--bg)',s);
+  }
+
+  // 7. ON HOLD
+  if(cOnHold.length){
+    let s='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px">';
+    cOnHold.forEach(x=>{s+=itemCard(x,true);});
+    s+='</div>';
+    h+=section('\u23F8\uFE0F','On Hold',cOnHold.length,'var(--bg)',s);
+  }
+
+  // 8. RECENTLY COMPLETED (last 10)
+  if(cCompleted.length){
+    const recent=[...cCompleted].sort((a,b)=>(b.r.updated||'').localeCompare(a.r.updated||'')).slice(0,10);
+    let s='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px">';
+    recent.forEach(x=>{s+=itemCard(x,false);});
+    s+='</div>';
+    if(cCompleted.length>10)s+='<div style="text-align:center;font-size:12px;color:var(--text-muted);padding:12px">+ '+(cCompleted.length-10)+' more completed</div>';
+    h+=section('\u2705','Recently Completed',cCompleted.length,'var(--success-bg)',s);
+  }
+
+  return h;
 }
 
 // === QUICK FIX ===
@@ -1271,6 +1562,7 @@ function renderDT(){
       +'<td '+ce+'>'+E(r.dept||'')+'</td>'
       +'<td>'+mkSel(['High','Medium','Low'],r.priority||'Medium','data-type="priority" '+dd)+'</td>'
       +'<td>'+mkSel(STS,r.status||'Not Started','data-type="status" '+dd)+'</td>'
+      +'<td>'+(r.needsApproval?'<span class="b b-for-approval">APPROVAL</span>':'<span class="b b-not-started">N/A</span>')+'</td>'
       +'<td>'+fSum+'</td>'
       +'<td class="date-cell">'+(r.updated||'\u2014')+'</td>'
       +'<td class="actions-col">'+(lk?'<button class="btn-edit" data-action="edit-dt" data-pi="'+i+'">Edit</button><button class="btn-delete" data-action="del-dt" data-pi="'+i+'">Del</button>':'<button class="btn-done" data-action="done-dt" data-pi="'+i+'">Done</button>')+'</td>'
@@ -1280,6 +1572,7 @@ function renderDT(){
       editRow+='<div><label style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:3px">Deadline</label><input type="date" class="ss" data-type="deadline" data-sh="daily" data-pi="'+i+'" value="'+(r.deadline||'')+'" style="padding:4px 8px;border:1px solid var(--border);border-radius:8px;font-size:12px"></div>';
       editRow+='<div><label style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:3px">Priority</label>'+mkSel(['High','Medium','Low'],r.priority||'Medium','data-type="priority" '+dd)+'</div>';
       editRow+='<div><label style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:3px">Status</label>'+mkSel(STS,r.status||'Not Started','data-type="status" '+dd)+'</div>';
+      editRow+='<div><label style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:3px">Requires Approval</label>'+mkSel(['Yes','No'],r.needsApproval?'Yes':'No','data-type="needsapproval" '+dd)+'</div>';
       editRow+='<div style="display:flex;align-items:flex-end"><button class="btn-delete" data-action="del-dt" data-pi="'+i+'">Delete Task</button></div>';
       editRow+='</div>';
       let fc='';
@@ -1293,10 +1586,10 @@ function renderDT(){
         dtdc+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:6px"><span style="font-size:16px">\u{1F4C4}</span><span style="flex:1;font-size:13px;font-weight:600">'+E(doc.name)+'</span>'+(doc.url?'<a href="'+E(doc.url)+'" target="_blank" style="font-size:11px;font-weight:600;color:var(--info);text-decoration:none;padding:3px 10px;border-radius:6px;background:var(--info-bg);border:1px solid #bfdbfe">Open</a>':'')+'<span style="font-size:10px;color:var(--text-muted)">'+E(doc.added||'')+'</span><button class="btn-delete" data-action="del-doc" data-sh="daily" data-pi="'+i+'" data-di="'+di+'">Remove</button></div>';
       });
       dtdc+='<div class="add-file-card" data-action="add-doc" data-sh="daily" data-pi="'+i+'" style="padding:10px">+ Add Supporting Document</div>';
-      rows+='<tr class="expand-row"><td colspan="12"><div class="expand-inner">'+editRow+'<h4>Files & Deliverables ('+f.length+')</h4><div class="file-cards">'+fc+'</div><h4 style="margin-top:16px">\u{1F4C2} Supporting Documents ('+dtdocs.length+')</h4><div style="margin-bottom:16px">'+dtdc+'</div><div class="expand-meta"><div class="expand-meta-block"><h4>Notes</h4><textarea class="expand-notes-area" data-sh="daily" data-pi="'+i+'">'+E(r.notes||'')+'</textarea><button class="btn btn-gold" style="margin-top:8px;padding:6px 16px;font-size:12px" data-action="save-notes-dt" data-pi="'+i+'">Save Notes</button></div></div></div></td></tr>';
+      rows+='<tr class="expand-row"><td colspan="13"><div class="expand-inner">'+editRow+'<h4>Files & Deliverables ('+f.length+')</h4><div class="file-cards">'+fc+'</div><h4 style="margin-top:16px">\u{1F4C2} Supporting Documents ('+dtdocs.length+')</h4><div style="margin-bottom:16px">'+dtdc+'</div><div class="expand-meta"><div class="expand-meta-block"><h4>Notes</h4><textarea class="expand-notes-area" data-sh="daily" data-pi="'+i+'">'+E(r.notes||'')+'</textarea><button class="btn btn-gold" style="margin-top:8px;padding:6px 16px;font-size:12px" data-action="save-notes-dt" data-pi="'+i+'">Save Notes</button></div></div></div></td></tr>';
     }
-  });if(!D.daily.length)rows='<tr><td colspan="12"><div class="empty-state"><p>No daily tasks</p><button class="btn btn-gold" data-action="open-add">+ Add Task</button></div></td></tr>';
-  return '<div class="pg-h"><h1><span>Daily</span> Tasks</h1><div class="tbar"><button class="btn btn-gold" data-action="open-add">+ Add Task</button><button class="btn btn-success" data-action="save-all">Save</button></div></div><div class="info-bar">Click a row to <strong>expand</strong> — shows files, priority, and approval. Each file can be <strong>approved or rejected</strong>.</div><div class="tw"><table><thead><tr><th></th><th style="width:40px">Done</th><th>Date</th><th>Deadline</th><th>Task</th><th>Department</th><th>Priority</th><th>Status</th><th>Files</th><th>Updated</th><th>Notes</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  });if(!D.daily.length)rows='<tr><td colspan="13"><div class="empty-state"><p>No daily tasks</p><button class="btn btn-gold" data-action="open-add">+ Add Task</button></div></td></tr>';
+  return '<div class="pg-h"><h1><span>Daily</span> Tasks</h1><div class="tbar"><button class="btn btn-gold" data-action="open-add">+ Add Task</button><button class="btn btn-success" data-action="save-all">Save</button></div></div><div class="info-bar">Click a row to <strong>expand</strong> — shows files, priority, and approval. Each file can be <strong>approved or rejected</strong>. Tasks marked <strong>Requires Approval</strong> will appear in the Review Board.</div><div class="tw"><table><thead><tr><th></th><th style="width:40px">Done</th><th>Date</th><th>Deadline</th><th>Task</th><th>Department</th><th>Priority</th><th>Status</th><th>Approval</th><th>Files</th><th>Updated</th><th>Notes</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 
 // === READ ROWS ===
@@ -1374,7 +1667,7 @@ function openAddModal(){
     mb.innerHTML='<div class="mf"><label>Task</label><input id="m-qf-task" placeholder="e.g. Fix header alignment"></div><div class="mrow"><div class="mf"><label>Department</label><select id="m-qf-dept"><option value="">-- Select --</option>'+deptOpts+'</select></div><div class="mf"><label>Project</label><input id="m-qf-project" placeholder="Optional"></div></div><div class="mrow"><div class="mf"><label>Priority</label><select id="m-qf-pri">'+priOpts+'</select></div><div class="mf"><label>Link / Location</label><input id="m-qf-link" placeholder="URL or file path"></div></div><div class="mf"><label>Description</label><textarea id="m-qf-desc" placeholder="What needs to be done?"></textarea></div><div class="mf"><label>Notes</label><textarea id="m-notes" placeholder="Optional..."></textarea></div>';
   } else if(view==='daily'){
     mt.textContent='Add Daily Task';const today=new Date().toISOString().slice(0,10);
-    mb.innerHTML='<div class="mrow"><div class="mf"><label>Date</label><input type="date" id="m-dt-date" value="'+today+'"></div><div class="mf"><label>Deadline</label><input type="date" id="m-dt-deadline"></div><div class="mf"><label>Priority</label><select id="m-dt-pri"><option>High</option><option selected>Medium</option><option>Low</option></select></div></div><div class="mf"><label>Task</label><input id="m-dt-task" placeholder="e.g. Review design"></div><div class="mf"><label>Department</label><select id="m-dt-dept"><option value="">-- Select --</option>'+deptOpts+'</select></div><div class="mf"><label>Notes</label><textarea id="m-notes" placeholder="Optional..."></textarea></div>';
+    mb.innerHTML='<div class="mrow"><div class="mf"><label>Date</label><input type="date" id="m-dt-date" value="'+today+'"></div><div class="mf"><label>Deadline</label><input type="date" id="m-dt-deadline"></div><div class="mf"><label>Priority</label><select id="m-dt-pri"><option>High</option><option selected>Medium</option><option>Low</option></select></div></div><div class="mf"><label>Task</label><input id="m-dt-task" placeholder="e.g. Review design"></div><div class="mrow"><div class="mf"><label>Department</label><select id="m-dt-dept"><option value="">-- Select --</option>'+deptOpts+'</select></div><div class="mf"><label>Requires Approval</label><select id="m-dt-approval"><option value="no">No</option><option value="yes">Yes</option></select></div></div><div class="mf"><label>Notes</label><textarea id="m-notes" placeholder="Optional..."></textarea></div>';
   } else {
     mt.textContent='Add New Project';
     mb.innerHTML='<div class="mrow"><div class="mf"><label>Department</label><select id="m-dept">'+deptOpts+'</select></div><div class="mf"><label>Category</label><select id="m-cat">'+catOpts+'</select><div id="newCatBox"></div></div></div><div class="mrow"><div class="mf"><label>Interface</label><select id="m-iface">'+ifOpts+'</select></div><div class="mf"><label>Phase</label><select id="m-ptype">'+ptOpts+'</select></div></div><div class="mf"><label>Component</label><input id="m-sub" placeholder="e.g. User Website"></div><div class="mrow"><div class="mf"><label>Tech Stack</label><input id="m-scope" placeholder="e.g. Angular"></div><div class="mf"><label>Priority</label><select id="m-pri">'+priOpts+'</select></div></div><div class="mrow"><div class="mf"><label>Owner</label><select id="m-owner">'+owOpts+'</select></div><div class="mf"><label>Target Date</label><input type="date" id="m-target"></div></div><div class="mrow"><div class="mf"><label>Live URL</label><input id="m-live" placeholder="https://..."></div><div class="mf"><label>Staging URL</label><input id="m-staging" placeholder="https://dev..."></div></div><div class="mf"><label>Figma URL</label><input id="m-figma" placeholder="https://figma.com/..."></div><div class="mf"><label>Notes</label><textarea id="m-notes" placeholder="Optional..."></textarea></div>';
@@ -1397,7 +1690,7 @@ document.getElementById('modalSubmitBtn').addEventListener('click',function(){
   } else if(view==='quickfix'){
     D.quickfix.push({task:gv('m-qf-task'),project:gv('m-qf-project'),dept:gv('m-qf-dept'),priority:gv('m-qf-pri')||'Standard',link:gv('m-qf-link'),desc:gv('m-qf-desc'),status:'Not Started',updated:now(),notes:gv('m-notes'),files:[]});
   } else if(view==='daily'){
-    D.daily.push({date:gv('m-dt-date'),deadline:gv('m-dt-deadline'),task:gv('m-dt-task'),dept:gv('m-dt-dept'),priority:gv('m-dt-pri')||'Medium',status:'Not Started',updated:now(),done:false,notes:gv('m-notes'),files:[]});
+    D.daily.push({date:gv('m-dt-date'),deadline:gv('m-dt-deadline'),task:gv('m-dt-task'),dept:gv('m-dt-dept'),priority:gv('m-dt-pri')||'Medium',status:gv('m-dt-approval')==='yes'?'For Approval':'Not Started',needsApproval:gv('m-dt-approval')==='yes',updated:now(),done:false,notes:gv('m-notes'),files:[]});
   }
   markChanged();document.getElementById('addModal').classList.remove('show');render();
 });
@@ -1414,6 +1707,7 @@ document.addEventListener('input',function(e){
   else if(tp==='target')r.target=s.value;
   else if(tp==='qflink')r.link=s.value;
   else if(tp==='deadline')r.deadline=s.value;
+  else if(tp==='needsapproval'){r.needsApproval=v==='Yes';if(r.needsApproval&&r.status==='Not Started')r.status='For Approval';}
   r.updated=now();markChanged();
 });
 
