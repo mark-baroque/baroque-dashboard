@@ -488,7 +488,7 @@ function renderStatusReport(){
 
   // Counts
   const inProg=all.filter(r=>r.status==='In Progress').length;
-  const forApp=all.filter(r=>r.status==='For Approval').length;
+  const forApp=all.filter(r=>r.status==='For Approval'||r.status==='Pending').length;
   const approved=all.filter(r=>r.status==='Approved').length;
   const revReq=all.filter(r=>r.status==='Revision Requested').length;
   const completed=all.filter(r=>r.status==='Completed').length;
@@ -522,7 +522,7 @@ function renderStatusReport(){
   h+='</div>';
 
   // Waiting for boss — needs approval
-  const waiting=[...all.filter(r=>r.status==='For Approval')];
+  const waiting=[...all.filter(r=>r.status==='For Approval'||r.status==='Pending')];
   const waitingFiles=[];
   [...all,...qf].forEach((r,i)=>{const sh=i<all.length?'projects':'quickfix';const pi=i<all.length?i:i-all.length;(r.files||[]).forEach((f,fi)=>{if(f.approval==='Pending Review')waitingFiles.push({file:f,item:r,sh,pi,fi});});});
   h+='<div class="sr-card"><h3>\u23F3 Waiting for Approval <span class="pdm-count">'+(waiting.length+waitingFiles.length)+'</span></h3>';
@@ -1162,7 +1162,7 @@ function renderReviewHub(){
   // Counts
   const cOverdue=all.filter(x=>{const r=x.r;if(r.done||r.status==='Completed')return false;if(r.deadline){const dl=new Date(r.deadline),n=new Date();n.setHours(0,0,0,0);dl.setHours(0,0,0,0);return dl<n;}if(r.target){const tl=new Date(r.target),n=new Date();n.setHours(0,0,0,0);tl.setHours(0,0,0,0);return tl<n;}return false;});
   const cInProg=all.filter(x=>x.r.status==='In Progress');
-  const cForApproval=all.filter(x=>x.r.status==='For Approval');
+  const cForApproval=all.filter(x=>x.r.status==='For Approval'||x.r.status==='Pending');
   const cNotStarted=all.filter(x=>x.r.status==='Not Started');
   const cCompleted=all.filter(x=>x.r.status==='Completed');
   const cOnHold=all.filter(x=>x.r.status==='On Hold');
@@ -1177,16 +1177,16 @@ function renderReviewHub(){
   const tabs=[
     {k:'everything',label:'Everything'},
     {k:'timeline',label:'Timeline'},
-    {k:'pending',label:'For Approval ('+cForApproval.length+')'},
+    {k:'pending',label:'For Approval ('+(cForApproval.length+cPendingFiles.length)+')'},
     {k:'inprogress',label:'In Progress ('+cInProg.length+')'},
     {k:'notstarted',label:'Not Started ('+cNotStarted.length+')'},
-    {k:'revision',label:'Revisions ('+cRevision.length+')'},
+    {k:'revision',label:'Revisions ('+(cRevision.length+cRevFiles.length)+')'},
     {k:'completed',label:'Completed ('+cCompleted.length+')'},
     {k:'onhold',label:'On Hold ('+cOnHold.length+')'}
   ];
   let th='<div class="review-tabs">';tabs.forEach(t=>{th+='<button class="review-tab'+(tab===t.k?' active':'')+'" data-action="review-tab" data-tab="'+t.k+'">'+t.label+'</button>';});th+='</div>';
 
-  if(tab!=='everything'){
+  if(tab!=='everything'&&tab!=='timeline'){
     // Filtered table view (existing behavior)
     const stMap={'pending':'For Approval','inprogress':'In Progress','notstarted':'Not Started','revision':'Revision Requested','completed':'Completed','onhold':'On Hold'};
     const fstMap={'pending':'Pending Review','inprogress':null,'notstarted':null,'revision':'Revision Requested','completed':null,'onhold':null};
@@ -1194,7 +1194,8 @@ function renderReviewHub(){
     const targetFst=fstMap[tab]||null;
     let rows='';
     all.forEach(x=>{
-      if(x.r.status!==targetSt)return;
+      const matchSt=(tab==='pending')?(x.r.status==='For Approval'||x.r.status==='Pending'):(x.r.status===targetSt);
+      if(!matchSt)return;
       let acts='';
       if(tab==='pending')acts='<button class="btn-approve" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="Approved">Approve</button> <button class="btn-reject" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="Rejected">Reject</button> <button class="btn-hold" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="On Hold">Hold</button>';
       else if(tab==='onhold')acts='<button class="btn-approve" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="In Progress">Resume</button>';
@@ -1355,7 +1356,7 @@ function renderReviewHub(){
       else deadlineStr='<span style="font-size:10px;color:var(--text-muted)">'+dl+'</span>';}}
     let acts='';
     if(showActions){
-      if(r.status==='For Approval')acts='<button class="btn-approve" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="Approved">Approve</button> <button class="btn-reject" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="Rejected">Reject</button> <button class="btn-hold" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="On Hold">Hold</button>';
+      if(r.status==='For Approval'||r.status==='Pending')acts='<button class="btn-approve" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="Approved">Approve</button> <button class="btn-reject" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="Rejected">Reject</button> <button class="btn-hold" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="On Hold">Hold</button>';
       else if(r.status==='Revision Requested')acts='<button class="btn-approve" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="In Progress">Back to Work</button>';
       else if(r.status==='On Hold')acts='<button class="btn-approve" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="In Progress">Resume</button>';
     }
@@ -1620,7 +1621,7 @@ function updateBadges(){
   document.getElementById('b-dt').textContent=D.daily.length;
   const all=[...D.projects,...D.quickfix,...D.daily];
   const allFiles=[...D.projects,...D.quickfix,...D.daily].reduce((s,r)=>s.concat(r.files||[]),[]);
-  const pend=all.filter(r=>r.status==='For Approval'||r.status==='Revision Requested').length+allFiles.filter(f=>f.approval==='Pending Review'||f.approval==='Revision Requested').length;
+  const pend=all.filter(r=>r.status==='For Approval'||r.status==='Pending'||r.status==='Revision Requested').length+allFiles.filter(f=>f.approval==='Pending Review'||f.approval==='Revision Requested').length;
   const el=document.getElementById('b-review');if(el)el.textContent=pend;
   const pe=document.getElementById('b-pipeline');if(pe)pe.textContent=D.projects.filter(r=>r.status!=='Completed').length;
   const me=document.getElementById('b-meetings');if(me)me.textContent=D.meetings.length;
