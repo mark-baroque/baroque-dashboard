@@ -347,6 +347,7 @@ const OWNER_OPTS=['Designer','Developer','Both','PM','None'];
 let D={projects:[],quickfix:[],daily:[],meetings:[],customCats:[]};
 let view='overview',expRow=-1,expSheet='projects',fileTgt=-1,fileTgtSheet='projects',fileEditIdx=-1;
 window._reviewTab='everything';
+window._tlExp=null; // timeline expanded item key: "sh-pi"
 
 function now(){const d=new Date();return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
 function E(s){if(!s)return '';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
@@ -999,7 +1000,9 @@ document.addEventListener('click',function(e){
     case 'chg-status': D[sh][pi].status=ns;if(ns==='Completed'&&D[sh][pi].done!==undefined)D[sh][pi].done=true;if(ns!=='Completed'&&D[sh][pi].done!==undefined)D[sh][pi].done=false;D[sh][pi].updated=now();markChanged();render(); break;
     case 'open-add': openAddModal(); break;
     case 'save-all': save(); break;
-    case 'review-tab': window._reviewTab=b.dataset.tab; render(); break;
+    case 'review-tab': window._reviewTab=b.dataset.tab; window._tlExp=null; render(); break;
+    case 'tl-expand': {const key=sh+'-'+pi; window._tlExp=(window._tlExp===key)?null:key; render();} break;
+    case 'tl-save-notes': {const ta=document.getElementById('tl-notes-'+sh+'-'+pi); if(ta){D[sh][pi].notes=ta.value;D[sh][pi].updated=now();markChanged();toast('Notes saved');}} break;
     case 'view-project': openProjectModal(b.dataset.sh||'projects',pi); break;
     case 'add-doc': {const dsh=b.dataset.sh||'projects';const docName=prompt('Document name (e.g. Brand Guidelines, Wireframe Brief)');if(docName){const docUrl=prompt('Link / URL (optional)');if(!D[dsh][pi].docs)D[dsh][pi].docs=[];D[dsh][pi].docs.push({name:docName.trim(),url:fixUrl(docUrl||''),added:now()});D[dsh][pi].updated=now();markChanged();render();toast('Document added');}} break;
     case 'del-doc': {const ddsh=b.dataset.sh||'projects';const di=+b.dataset.di;if(confirm('Remove this document?')){D[ddsh][pi].docs.splice(di,1);D[ddsh][pi].updated=now();markChanged();render();}} break;
@@ -1294,28 +1297,67 @@ function renderReviewHub(){
       const scl=x.sh==='projects'?'src-proj':x.sh==='quickfix'?'src-qf':'src-dt';
       const f=r.files||[],fA=f.filter(z=>z.approval==='Approved').length,fP=f.filter(z=>z.approval==='Pending Review').length;
       const isDone=r.status==='Completed'||r.done;
-      let c='<div style="display:flex;align-items:flex-start;gap:14px;padding:14px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px;border-left:4px solid '+col+';cursor:pointer;transition:all .15s'+(isDone?';opacity:.55':'')+';" data-action="view-project" data-sh="'+x.sh+'" data-pi="'+x.pi+'">';
+      const isExp=window._tlExp===(x.sh+'-'+x.pi);
+      const hasNotes=r.notes&&r.notes.trim();
+
+      let c='<div style="background:var(--card);border:1px solid '+(isExp?'var(--gold)':'var(--border)')+';border-radius:10px;border-left:4px solid '+col+';transition:all .15s'+(isDone?';opacity:.55':'')+';overflow:hidden">';
+      // Top row — clickable to expand
+      c+='<div style="display:flex;align-items:flex-start;gap:14px;padding:14px 18px;cursor:pointer" data-action="tl-expand" data-sh="'+x.sh+'" data-pi="'+x.pi+'">';
       // Left: date column
       c+='<div style="min-width:70px;text-align:center;flex-shrink:0">';
       if(dl){const dd=new Date(dl);c+='<div style="font-size:20px;font-weight:800;color:'+(isDone?'var(--success)':'var(--text)')+'">'+dd.getDate()+'</div><div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase">'+dd.toLocaleString('en',{month:'short',year:'numeric'})+'</div>';}
       else{c+='<div style="font-size:12px;color:var(--text-muted)">No date</div>';}
       c+='</div>';
-      // Right: content
+      // Middle: content
       c+='<div style="flex:1;min-width:0">';
       c+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap"><span class="source-badge '+scl+'" style="font-size:9px">'+x.type+'</span>'+statusBadge(r.status)+priBadge(r.priority)+'</div>';
       c+='<div style="font-size:14px;font-weight:700;color:var(--text);'+(isDone?'text-decoration:line-through;':'')+'">'+E(x.name)+'</div>';
       c+='<div style="font-size:12px;color:var(--text-sec);margin-top:2px">'+E(x.dept)+(x.detail?' \u2022 '+E(x.detail):'')+'</div>';
       if(f.length)c+='<div style="margin-top:6px;font-size:11px;color:var(--text-sec)"><span style="font-weight:700">'+f.length+'</span> files'+(fA?' \u2022 <span style="color:var(--success);font-weight:600">'+fA+' approved</span>':'')+(fP?' \u2022 <span style="color:var(--warning);font-weight:600">'+fP+' pending</span>':'')+'</div>';
+      // Show notes preview when collapsed
+      if(!isExp&&hasNotes)c+='<div style="margin-top:6px;font-size:11px;color:var(--text-sec);background:var(--bg);padding:6px 10px;border-radius:6px;border:1px solid var(--border-light);max-height:32px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">\u{1F4DD} '+E(r.notes)+'</div>';
       c+='</div>';
-      // Right: actions
+      // Right: expand arrow + actions
       c+='<div style="flex-shrink:0;display:flex;gap:4px;align-items:center">';
       if(!isDone){
         c+='<button class="btn-done" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="Completed" style="font-size:10px;padding:5px 10px">Done</button>';
       } else {
         c+='<button class="btn-edit" data-action="chg-status" data-sh="'+x.sh+'" data-pi="'+x.pi+'" data-ns="In Progress" style="font-size:10px;padding:5px 10px">Reopen</button>';
       }
+      c+='<span style="font-size:10px;color:var(--text-muted);margin-left:4px">'+(isExp?'\u25B2':'\u25BC')+'</span>';
       c+='</div>';
-      c+='</div>';
+      c+='</div>'; // end top row
+
+      // Expanded area — notes + actions
+      if(isExp){
+        c+='<div style="padding:0 18px 18px;border-top:1px solid var(--border)">';
+        // Notes
+        c+='<div style="margin-top:14px"><div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Notes</div>';
+        c+='<textarea id="tl-notes-'+x.sh+'-'+x.pi+'" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:#fff;min-height:80px;resize:vertical;font-family:inherit;color:var(--text);line-height:1.6" placeholder="Add notes about this item \u2014 what happened, what\u2019s left, blockers...">'+E(r.notes||'')+'</textarea>';
+        c+='<div style="display:flex;gap:8px;margin-top:8px;align-items:center">';
+        c+='<button class="btn btn-gold" style="padding:7px 16px;font-size:12px" data-action="tl-save-notes" data-sh="'+x.sh+'" data-pi="'+x.pi+'">Save Notes</button>';
+        c+='<button class="btn-view" data-action="view-project" data-sh="'+x.sh+'" data-pi="'+x.pi+'" style="font-size:11px">View Full Details</button>';
+        // Status quick-change
+        c+='<span style="margin-left:auto;font-size:10px;color:var(--text-muted)">Status:</span> '+mkSel(STS,r.status||'Not Started','data-type="status" data-sh="'+x.sh+'" data-pi="'+x.pi+'"');
+        c+='</div>';
+        c+='</div>';
+
+        // Files preview
+        if(f.length){
+          c+='<div style="margin-top:14px"><div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Files ('+f.length+')</div>';
+          c+='<div style="display:flex;flex-direction:column;gap:4px">';
+          f.forEach(function(fl,fi){
+            c+='<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg);border-radius:6px;border:1px solid var(--border-light)"><span style="font-size:14px">'+fIcon(fl.name)+'</span><span style="flex:1;font-size:12px;font-weight:600">'+E(fl.name)+'</span><span class="fa-badge '+faCls(fl.approval||'Pending Review')+'" style="font-size:9px">'+E(fl.approval||'Pending Review')+'</span>'+(fl.url?'<a href="'+E(fl.url)+'" target="_blank" style="font-size:10px;font-weight:600;color:var(--info);text-decoration:none;padding:2px 8px;border-radius:5px;background:var(--info-bg)">Open</a>':'')+'</div>';
+          });
+          c+='</div></div>';
+        }
+
+        // Updated timestamp
+        if(r.updated)c+='<div style="margin-top:10px;font-size:10px;color:var(--text-muted);text-align:right">Last updated: '+E(r.updated)+'</div>';
+        c+='</div>'; // end expanded area
+      }
+
+      c+='</div>'; // end card
       return c;
     }
 
