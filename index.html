@@ -415,15 +415,37 @@ function openProjectModal(sh,pi){
   const fP=f.filter(x=>x.approval==='Pending Review').length;
   const fRev=f.filter(x=>x.approval==='Revision Requested').length;
   const fRej=f.filter(x=>x.approval==='Rejected').length;
+  // Determine correct navigation target
+  const goTarget=sh==='daily'?'daily':sh==='quickfix'?'quickfix':(r.dept||'overview');
+  const goLabel=sh==='daily'?'Go to Daily Tasks':sh==='quickfix'?'Go to Quick Fix':'Go to Project';
 
-  let h='<div class="pdm-header"><div class="pdm-icon" style="background:'+col+'">'+(sh==='quickfix'?'>':'>')+'</div><div class="pdm-title"><h2>'+E(r.sub||r.task||'Untitled')+'</h2><div class="pdm-sub">'+E(r.dept||'')+' \u2022 '+E(r.cat||r.project||'')+(r.scope?' \u2022 '+E(r.scope):'')+'</div><div class="pdm-badges">'+statusBadge(r.status||'Not Started')+priBadge(r.priority)+(r.projType?phaseBadge(r.projType):'')+(r.iface?ifaceBadge(r.iface):'')+(r.owner?ownerBadge(r.owner):'')+'</div></div><button class="btn-cancel" onclick="document.getElementById(\'projModal\').classList.remove(\'show\')" style="flex-shrink:0">\u2715</button></div>';
+  let h='<div class="pdm-header"><div class="pdm-icon" style="background:'+col+'">'+(sh==='quickfix'?'>':sh==='daily'?'>':'>')+'</div><div class="pdm-title"><h2>'+E(r.sub||r.task||'Untitled')+'</h2><div class="pdm-sub">'+E(r.dept||'')+(r.cat||r.project?' \u2022 '+E(r.cat||r.project):'')+(r.scope?' \u2022 '+E(r.scope):'')+(sh==='daily'?' \u2022 <span style="color:var(--info);font-weight:600">Daily Task</span>':'')+(sh==='quickfix'?' \u2022 <span style="color:var(--orange);font-weight:600">Quick Fix</span>':'')+'</div><div class="pdm-badges">'+statusBadge(r.status||'Not Started')+priBadge(r.priority)+(r.projType?phaseBadge(r.projType):'')+(r.iface?ifaceBadge(r.iface):'')+(r.owner?ownerBadge(r.owner):'')+'</div></div><button class="btn-cancel" onclick="document.getElementById(\'projModal\').classList.remove(\'show\')" style="flex-shrink:0">\u2715</button></div>';
 
-  // Info grid
+  // Info grid — different for daily/quickfix vs projects
   h+='<div class="pdm-grid">';
-  h+='<div class="pdm-card"><h4>Design Progress</h4><div class="pdm-val">'+pctBar(r.desPct||0,'pf-des')+'</div></div>';
-  h+='<div class="pdm-card"><h4>Dev Progress</h4><div class="pdm-val">'+pctBar(r.devPct||0,'pf-dev')+'</div></div>';
-  h+='<div class="pdm-card"><h4>Alignment</h4><div class="pdm-val">'+alignDot(r.dvStatus||'Not Started')+'</div></div>';
-  h+='<div class="pdm-card"><h4>Target Date</h4><div class="pdm-val">'+(r.target||'Not set')+'</div></div>';
+  if(sh==='daily'){
+    h+='<div class="pdm-card"><h4>Date</h4><div class="pdm-val">'+(r.date||'Not set')+'</div></div>';
+    h+='<div class="pdm-card"><h4>Deadline</h4><div class="pdm-val">';
+    if(r.deadline){const dl=new Date(r.deadline),n2=new Date();n2.setHours(0,0,0,0);dl.setHours(0,0,0,0);const diff=Math.ceil((dl-n2)/86400000);
+      if(r.done||r.status==='Completed')h+=r.deadline;
+      else if(diff<0)h+='<span style="color:var(--danger);font-weight:700">'+r.deadline+' ('+Math.abs(diff)+'d overdue)</span>';
+      else if(diff===0)h+='<span style="color:var(--warning);font-weight:700">'+r.deadline+' (Today)</span>';
+      else h+='<span style="color:var(--text)">'+r.deadline+' ('+diff+'d left)</span>';
+    } else h+='Not set';
+    h+='</div></div>';
+    h+='<div class="pdm-card"><h4>Done</h4><div class="pdm-val">'+(r.done?'<span style="color:var(--success);font-weight:700">\u2705 Yes</span>':'<span style="color:var(--text-muted)">No</span>')+'</div></div>';
+    h+='<div class="pdm-card"><h4>Approval</h4><div class="pdm-val">'+(r.needsApproval?'<span style="color:var(--purple);font-weight:600">Required</span>':'<span style="color:var(--text-muted)">Not required</span>')+'</div></div>';
+  } else if(sh==='quickfix'){
+    h+='<div class="pdm-card"><h4>Project</h4><div class="pdm-val">'+E(r.project||'Not set')+'</div></div>';
+    h+='<div class="pdm-card"><h4>Link</h4><div class="pdm-val">'+(r.link?'<a href="'+E(fixUrl(r.link))+'" target="_blank" style="color:var(--info);text-decoration:none;font-weight:600">Open</a>':'Not set')+'</div></div>';
+    h+='<div class="pdm-card"><h4>Description</h4><div class="pdm-val" style="font-size:12px">'+E(r.desc||'No description')+'</div></div>';
+    h+='<div class="pdm-card"><h4>Target Date</h4><div class="pdm-val">'+(r.target||'Not set')+'</div></div>';
+  } else {
+    h+='<div class="pdm-card"><h4>Design Progress</h4><div class="pdm-val">'+pctBar(r.desPct||0,'pf-des')+'</div></div>';
+    h+='<div class="pdm-card"><h4>Dev Progress</h4><div class="pdm-val">'+pctBar(r.devPct||0,'pf-dev')+'</div></div>';
+    h+='<div class="pdm-card"><h4>Alignment</h4><div class="pdm-val">'+alignDot(r.dvStatus||'Not Started')+'</div></div>';
+    h+='<div class="pdm-card"><h4>Target Date</h4><div class="pdm-val">'+(r.target||'Not set')+'</div></div>';
+  }
   h+='</div>';
 
   // Links
@@ -475,7 +497,7 @@ function openProjectModal(sh,pi){
   }
 
   // Actions
-  h+='<div class="m-acts"><button class="btn-cancel" onclick="document.getElementById(\'projModal\').classList.remove(\'show\')">Close</button><button class="btn btn-gold" onclick="document.getElementById(\'projModal\').classList.remove(\'show\');go(\''+E(r.dept||'overview')+'\')">Go to Project</button></div>';
+  h+='<div class="m-acts"><button class="btn-cancel" onclick="document.getElementById(\'projModal\').classList.remove(\'show\')">Close</button><button class="btn btn-gold" onclick="document.getElementById(\'projModal\').classList.remove(\'show\');expSheet=\''+E(sh)+'\';expRow='+pi+';go(\''+E(goTarget)+'\')">'+E(goLabel)+'</button></div>';
 
   document.getElementById('projModalContent').innerHTML=h;
   document.getElementById('projModal').classList.add('show');
