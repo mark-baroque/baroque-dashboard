@@ -811,7 +811,7 @@ let _hasUnsaved=false;
 let _saving=false;
 let _idleTimer=null;
 
-function migrateQF(){D.quickfix.forEach(r=>{if(!r.files)r.files=[];if(!r.docs)r.docs=[];if(!r.priority)r.priority='Standard';r.files.forEach(f=>{if(!f.approval)f.approval='Pending Review';if(!f.history)f.history=[];});})}
+function migrateQF(){D.quickfix.forEach(r=>{if(!r.files)r.files=[];if(!r.docs)r.docs=[];if(!r.priority)r.priority='Standard';if(r.deadline===undefined)r.deadline='';r.files.forEach(f=>{if(!f.approval)f.approval='Pending Review';if(!f.history)f.history=[];});})}
 
 function prepareData(){
   D.projects.forEach(ensureFields);
@@ -1576,6 +1576,7 @@ function renderQF(){
       +'<td '+ce+'>'+E(r.dept||'')+'</td>'
       +'<td>'+mkSel(PRI_OPTS,r.priority||'Standard','data-type="priority" '+dd)+'</td>'
       +'<td>'+mkSel(STS,r.status||'Not Started','data-type="status" '+dd)+'</td>'
+      +'<td>'+(function(){if(!r.deadline)return'<span class="date-cell">\u2014</span>';const dld=new Date(r.deadline),now2=new Date();now2.setHours(0,0,0,0);dld.setHours(0,0,0,0);const diff=Math.ceil((dld-now2)/(86400000));const fmt=r.deadline;if(r.status==='Completed')return'<span class="date-cell">'+fmt+'</span>';if(diff<0)return'<span style="color:var(--danger);font-weight:600;font-size:11px">'+fmt+' <span style="font-size:9px;background:var(--danger-bg);padding:1px 5px;border-radius:4px">Overdue</span></span>';if(diff===0)return'<span style="color:var(--warning);font-weight:600;font-size:11px">'+fmt+' <span style="font-size:9px;background:var(--warning-bg);padding:1px 5px;border-radius:4px">Today</span></span>';if(diff<=2)return'<span style="color:var(--orange);font-weight:600;font-size:11px">'+fmt+' <span style="font-size:9px;background:var(--orange-bg);padding:1px 5px;border-radius:4px">'+diff+'d left</span></span>';return'<span class="date-cell">'+fmt+'</span>';})()+'</td>'
       +'<td>'+fSum+'</td>'
       +'<td class="date-cell">'+(r.updated||'\u2014')+'</td>'
       +'<td class="actions-col">'+(lk?'<button class="btn-edit" data-action="edit-qf" data-pi="'+i+'">Edit</button><button class="btn-delete" data-action="del-qf" data-pi="'+i+'">Del</button>':'<button class="btn-done" data-action="done-qf" data-pi="'+i+'">Done</button>')+'</td>'
@@ -1583,6 +1584,7 @@ function renderQF(){
 
     if(isE){
       let editRow='<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;padding:12px;background:var(--card);border-radius:10px;border:1px solid var(--border)">';
+      editRow+='<div><label style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:3px">Deadline</label><input type="date" class="ss" data-type="qfdeadline" data-sh="quickfix" data-pi="'+i+'" value="'+(r.deadline||'')+'" style="padding:4px 8px;border:1px solid var(--border);border-radius:8px;font-size:12px"></div>';
       editRow+='<div><label style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:3px">Priority</label>'+mkSel(PRI_OPTS,r.priority||'Standard','data-type="priority" '+dd)+'</div>';
       editRow+='<div><label style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:3px">Status</label>'+mkSel(STS,r.status||'Not Started','data-type="status" '+dd)+'</div>';
       editRow+='<div><label style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:3px">Link</label><input class="ss" data-type="qflink" '+dd+' value="'+E(r.link||'')+'" style="font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);width:200px" placeholder="URL or path"></div>';
@@ -1603,11 +1605,11 @@ function renderQF(){
       });
       qfdc+='<div class="add-file-card" data-action="add-doc" data-sh="quickfix" data-pi="'+i+'" style="padding:10px">+ Add Supporting Document</div>';
 
-      rows+='<tr class="expand-row"><td colspan="9"><div class="expand-inner">'+editRow+'<h4>Files & Deliverables ('+f.length+')</h4><div class="file-cards">'+fc+'</div><h4 style="margin-top:16px">\u{1F4C2} Supporting Documents ('+qfdocs.length+')</h4><div style="margin-bottom:16px">'+qfdc+'</div><div class="expand-meta"><div class="expand-meta-block"><h4>Description</h4><p>'+E(r.desc||'No description')+'</p></div><div class="expand-meta-block"><h4>Notes</h4><textarea class="expand-notes-area" data-sh="quickfix" data-pi="'+i+'">'+E(r.notes||'')+'</textarea><button class="btn btn-gold" style="margin-top:8px;padding:6px 16px;font-size:12px" data-action="save-notes-qf" data-pi="'+i+'">Save Notes</button></div></div></div></td></tr>';
+      rows+='<tr class="expand-row"><td colspan="10"><div class="expand-inner">'+editRow+'<h4>Files & Deliverables ('+f.length+')</h4><div class="file-cards">'+fc+'</div><h4 style="margin-top:16px">\u{1F4C2} Supporting Documents ('+qfdocs.length+')</h4><div style="margin-bottom:16px">'+qfdc+'</div><div class="expand-meta"><div class="expand-meta-block"><h4>Description</h4><p>'+E(r.desc||'No description')+'</p></div><div class="expand-meta-block"><h4>Notes</h4><textarea class="expand-notes-area" data-sh="quickfix" data-pi="'+i+'">'+E(r.notes||'')+'</textarea><button class="btn btn-gold" style="margin-top:8px;padding:6px 16px;font-size:12px" data-action="save-notes-qf" data-pi="'+i+'">Save Notes</button></div></div></div></td></tr>';
     }
   });
-  if(!D.quickfix.length)rows='<tr><td colspan="9"><div class="empty-state"><p>No quick fix tasks</p><button class="btn btn-gold" data-action="open-add">+ Add Task</button></div></td></tr>';
-  return '<div class="pg-h"><h1><span>Quick Fix</span> Tasks</h1><div class="tbar"><button class="btn btn-gold" data-action="open-add">+ Add Task</button><button class="btn btn-success" data-action="save-all">Save</button></div></div><div class="info-bar">Click a row to <strong>expand</strong> — shows files, priority, and approval. Each file can be <strong>approved or rejected</strong>.</div><div class="tw"><table><thead><tr><th></th><th>Task</th><th>Project</th><th>Department</th><th>Priority</th><th>Status</th><th>Files</th><th>Updated</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  if(!D.quickfix.length)rows='<tr><td colspan="10"><div class="empty-state"><p>No quick fix tasks</p><button class="btn btn-gold" data-action="open-add">+ Add Task</button></div></td></tr>';
+  return '<div class="pg-h"><h1><span>Quick Fix</span> Tasks</h1><div class="tbar"><button class="btn btn-gold" data-action="open-add">+ Add Task</button><button class="btn btn-success" data-action="save-all">Save</button></div></div><div class="info-bar">Click a row to <strong>expand</strong> — shows files, priority, and approval. Each file can be <strong>approved or rejected</strong>.</div><div class="tw"><table><thead><tr><th></th><th>Task</th><th>Project</th><th>Department</th><th>Priority</th><th>Status</th><th>Deadline</th><th>Files</th><th>Updated</th><th>Actions</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 
 // === DAILY ===
@@ -1729,7 +1731,7 @@ function openAddModal(){
     mb.innerHTML='<div class="mrow"><div class="mf"><label>Category</label><select id="m-cat">'+catOpts+'</select><div id="newCatBox"></div></div><div class="mf"><label>Interface</label><select id="m-iface">'+ifOpts+'</select></div></div><div class="mf"><label>Component</label><input id="m-sub" placeholder="e.g. User Website"></div><div class="mrow"><div class="mf"><label>Tech Stack</label><input id="m-scope" placeholder="e.g. Angular"></div><div class="mf"><label>Phase</label><select id="m-ptype">'+ptOpts+'</select></div></div><div class="mrow"><div class="mf"><label>Priority</label><select id="m-pri">'+priOpts+'</select></div><div class="mf"><label>Owner</label><select id="m-owner">'+owOpts+'</select></div></div><div class="mrow"><div class="mf"><label>Live URL</label><input id="m-live" placeholder="https://..."></div><div class="mf"><label>Staging URL</label><input id="m-staging" placeholder="https://dev..."></div></div><div class="mf"><label>Figma URL</label><input id="m-figma" placeholder="https://figma.com/..."></div><div class="mrow"><div class="mf"><label>Target Date</label><input type="date" id="m-target"></div></div><div class="mf"><label>Notes</label><textarea id="m-notes" placeholder="Optional..."></textarea></div>';
   } else if(view==='quickfix'){
     mt.textContent='Add Quick Fix Task';
-    mb.innerHTML='<div class="mf"><label>Task</label><input id="m-qf-task" placeholder="e.g. Fix header alignment"></div><div class="mrow"><div class="mf"><label>Department</label><select id="m-qf-dept"><option value="">-- Select --</option>'+deptOpts+'</select></div><div class="mf"><label>Project</label><input id="m-qf-project" placeholder="Optional"></div></div><div class="mrow"><div class="mf"><label>Priority</label><select id="m-qf-pri">'+priOpts+'</select></div><div class="mf"><label>Link / Location</label><input id="m-qf-link" placeholder="URL or file path"></div></div><div class="mf"><label>Description</label><textarea id="m-qf-desc" placeholder="What needs to be done?"></textarea></div><div class="mf"><label>Notes</label><textarea id="m-notes" placeholder="Optional..."></textarea></div>';
+    mb.innerHTML='<div class="mf"><label>Task</label><input id="m-qf-task" placeholder="e.g. Fix header alignment"></div><div class="mrow"><div class="mf"><label>Department</label><select id="m-qf-dept"><option value="">-- Select --</option>'+deptOpts+'</select></div><div class="mf"><label>Project</label><input id="m-qf-project" placeholder="Optional"></div></div><div class="mrow"><div class="mf"><label>Priority</label><select id="m-qf-pri">'+priOpts+'</select></div><div class="mf"><label>Deadline</label><input type="date" id="m-qf-deadline"></div></div><div class="mrow"><div class="mf"><label>Link / Location</label><input id="m-qf-link" placeholder="URL or file path"></div></div><div class="mf"><label>Description</label><textarea id="m-qf-desc" placeholder="What needs to be done?"></textarea></div><div class="mf"><label>Notes</label><textarea id="m-notes" placeholder="Optional..."></textarea></div>';
   } else if(view==='daily'){
     mt.textContent='Add Daily Task';const today=new Date().toISOString().slice(0,10);
     mb.innerHTML='<div class="mrow"><div class="mf"><label>Date</label><input type="date" id="m-dt-date" value="'+today+'"></div><div class="mf"><label>Deadline</label><input type="date" id="m-dt-deadline"></div><div class="mf"><label>Priority</label><select id="m-dt-pri"><option>High</option><option selected>Medium</option><option>Low</option></select></div></div><div class="mf"><label>Task</label><input id="m-dt-task" placeholder="e.g. Review design"></div><div class="mrow"><div class="mf"><label>Department</label><select id="m-dt-dept"><option value="">-- Select --</option>'+deptOpts+'</select></div><div class="mf"><label>Requires Approval</label><select id="m-dt-approval"><option value="no">No</option><option value="yes">Yes</option></select></div></div><div class="mf"><label>Notes</label><textarea id="m-notes" placeholder="Optional..."></textarea></div>';
@@ -1753,7 +1755,7 @@ document.getElementById('modalSubmitBtn').addEventListener('click',function(){
     let cat=gv('m-cat');if(cat==='__new__')cat='Other';
     D.projects.push({cat,sub:gv('m-sub'),dept,scope:gv('m-scope'),iface:gv('m-iface')||'Client-facing',projType:gv('m-ptype')||'Discovery',priority:gv('m-pri')||'Standard',owner:gv('m-owner')||'Designer',liveUrl:fixUrl(gv('m-live')),stagingUrl:fixUrl(gv('m-staging')),figmaUrl:fixUrl(gv('m-figma')),target:gv('m-target'),desPct:0,devPct:0,dvStatus:'Not Started',status:'Not Started',updated:now(),notes:gv('m-notes'),files:[]});
   } else if(view==='quickfix'){
-    D.quickfix.push({task:gv('m-qf-task'),project:gv('m-qf-project'),dept:gv('m-qf-dept'),priority:gv('m-qf-pri')||'Standard',link:gv('m-qf-link'),desc:gv('m-qf-desc'),status:'Not Started',updated:now(),notes:gv('m-notes'),files:[]});
+    D.quickfix.push({task:gv('m-qf-task'),project:gv('m-qf-project'),dept:gv('m-qf-dept'),priority:gv('m-qf-pri')||'Standard',deadline:gv('m-qf-deadline'),link:gv('m-qf-link'),desc:gv('m-qf-desc'),status:'Not Started',updated:now(),notes:gv('m-notes'),files:[]});
   } else if(view==='daily'){
     D.daily.push({date:gv('m-dt-date'),deadline:gv('m-dt-deadline'),task:gv('m-dt-task'),dept:gv('m-dt-dept'),priority:gv('m-dt-pri')||'Medium',status:gv('m-dt-approval')==='yes'?'For Approval':'Not Started',needsApproval:gv('m-dt-approval')==='yes',updated:now(),done:false,notes:gv('m-notes'),files:[]});
   }
@@ -1771,6 +1773,7 @@ document.addEventListener('input',function(e){
   else if(tp==='figmaurl')r.figmaUrl=fixUrl(s.value);
   else if(tp==='target')r.target=s.value;
   else if(tp==='qflink')r.link=s.value;
+  else if(tp==='qfdeadline')r.deadline=s.value;
   else if(tp==='deadline')r.deadline=s.value;
   else if(tp==='needsapproval'){r.needsApproval=v==='Yes';if(r.needsApproval&&r.status==='Not Started')r.status='For Approval';}
   r.updated=now();markChanged();
