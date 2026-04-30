@@ -247,6 +247,37 @@ select.ss:focus{outline:none;border-color:var(--gold);}
 .btn-view:hover{background:var(--gold-bg);border-color:var(--gold);}
 @media(max-width:1024px){.sidebar{width:220px;}.main{margin-left:220px;padding:20px;}.pdm{width:95vw;}.pdm-grid{grid-template-columns:1fr;}}
 @media(max-width:768px){.sidebar{display:none;}.main{margin-left:0;padding:14px;}.stats-row{grid-template-columns:repeat(2,1fr);}.review-tabs{flex-wrap:wrap;}}
+
+/* === NOTIFICATION SYSTEM === */
+#notifBtn{position:fixed;top:18px;right:22px;z-index:900;width:40px;height:40px;border-radius:10px;background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;color:var(--text-sec);transition:var(--tr);}
+#notifBtn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-bg);}
+#notifBadge{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;line-height:1;pointer-events:none;}
+#notifBadge.hidden{display:none;}
+#notifOverlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:1400;background:rgba(25,25,36,.2);backdrop-filter:blur(2px);display:none;}
+#notifOverlay.show{display:block;}
+#notifDrawer{position:fixed;top:0;right:0;bottom:0;z-index:1401;width:380px;max-width:92vw;background:var(--card);border-left:1px solid var(--border);box-shadow:-8px 0 40px rgba(30,30,45,.12);transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;}
+#notifDrawer.open{transform:translateX(0);}
+#ndHead{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+#ndHead h2{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+#ndHead .nd-close{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text-sec);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;transition:var(--tr);}
+#ndHead .nd-close:hover{border-color:var(--danger);color:var(--danger);}
+#ndBody{flex:1;overflow-y:auto;padding:16px;}
+#ndBody::-webkit-scrollbar{width:4px;}#ndBody::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.nd-section{margin-bottom:18px;}
+.nd-section-title{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.nd-section-title .nd-count{font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px;}
+.nd-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;background:var(--bg);margin-bottom:5px;cursor:pointer;transition:var(--tr);border:1px solid transparent;}
+.nd-item:hover{background:var(--gold-bg);border-color:var(--border);}
+.nd-item .nd-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.nd-item .nd-info{flex:1;min-width:0;}
+.nd-item .nd-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nd-item .nd-sub{font-size:10px;color:var(--text-muted);margin-top:2px;}
+.nd-item .nd-tag{font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;flex-shrink:0;margin-top:2px;}
+.nd-empty{text-align:center;padding:40px 16px;color:var(--text-muted);font-size:13px;}
+.nd-empty .nd-check{font-size:28px;margin-bottom:8px;}
+#ndFoot{padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0;}
+#ndFoot button{width:100%;padding:9px;border-radius:8px;font-size:12px;font-weight:600;background:var(--bg);color:var(--text-sec);border:1px solid var(--border);}
+#ndFoot button:hover{background:var(--gold-bg);border-color:var(--gold);color:var(--gold);}
 </style>
 </head>
 <body>
@@ -332,6 +363,23 @@ select.ss:focus{outline:none;border-color:var(--gold);}
   </div>
 </div>
 <div class="toast" id="toast"></div>
+
+<!-- NOTIFICATION BUTTON -->
+<button id="notifBtn" onclick="toggleNotif()" title="Notifications" style="display:none">
+  🔔
+  <span id="notifBadge" class="hidden"></span>
+</button>
+
+<!-- NOTIFICATION DRAWER -->
+<div id="notifOverlay" onclick="closeNotif()"></div>
+<div id="notifDrawer">
+  <div id="ndHead">
+    <h2>🔔 <span id="ndTitle">Notifications</span></h2>
+    <button class="nd-close" onclick="closeNotif()">✕</button>
+  </div>
+  <div id="ndBody"></div>
+  <div id="ndFoot"><button onclick="closeNotif();go('overview')">View All Projects</button></div>
+</div>
 
 <script>
 const STS=['Not Started','In Progress','Pending','For Approval','Approved','Rejected','Revision Requested','Completed','On Hold'];
@@ -1047,6 +1095,7 @@ function render(){
   else if(view==='quickfix')mc.innerHTML=renderQF();
   else if(view==='daily')mc.innerHTML=renderDT();
   updateBadges();
+  updateNotifBadge();
 }
 
 // === OVERVIEW ===
@@ -1804,7 +1853,7 @@ function unlock(){
     document.getElementById('userRole').textContent=user.role;
     document.getElementById('userAvatar').textContent=user.avatar;
     document.getElementById('userAvatar').style.background=user.color;
-    checkCloudSetup();load();render();
+    checkCloudSetup();load();render();updateNotifBadge();
   } else {
     document.getElementById('lockError').textContent='Wrong passcode';
     document.getElementById('lockInput').value='';
@@ -1841,6 +1890,129 @@ document.addEventListener('paste',function(e){
     }
   }
 });
+
+// === NOTIFICATION SYSTEM ===
+function getNotifications(){
+  const today=new Date();today.setHours(0,0,0,0);
+  const notifs={overdue:[],dueToday:[],urgent:[],pendingApproval:[],inProgress:[]};
+
+  function dayDiff(dl){
+    if(!dl)return null;
+    const d=new Date(dl);d.setHours(0,0,0,0);
+    return Math.ceil((d-today)/86400000);
+  }
+
+  // Projects
+  D.projects.forEach((r,i)=>{
+    const active=r.status!=='Completed'&&r.status!=='Rejected';
+    if(!active)return;
+    const diff=dayDiff(r.deadline);
+    if(diff!==null&&diff<0) notifs.overdue.push({label:r.name||r.project||'Untitled',sub:(r.dept||'')+(r.status?' · '+r.status:''),action:()=>go(r.dept||'overview'),type:'project',diff});
+    else if(diff===0) notifs.dueToday.push({label:r.name||r.project||'Untitled',sub:(r.dept||'')+(r.status?' · '+r.status:''),action:()=>go(r.dept||'overview'),type:'project'});
+    if((r.priority||'').toLowerCase()==='urgent') notifs.urgent.push({label:r.name||r.project||'Untitled',sub:(r.dept||'')+(r.status?' · '+r.status:''),action:()=>go(r.dept||'overview'),type:'project'});
+    if(r.status==='In Progress') notifs.inProgress.push({label:r.name||r.project||'Untitled',sub:r.dept||'',action:()=>go(r.dept||'overview'),type:'project'});
+    // Pending file approvals
+    (r.files||[]).forEach(f=>{
+      if(f.approval&&f.approval!=='Approved'&&f.approval!=='Rejected')
+        notifs.pendingApproval.push({label:f.name||'File',sub:(r.name||r.project||'')+(r.dept?' · '+r.dept:''),action:()=>go(r.dept||'overview'),type:'file'});
+    });
+  });
+
+  // Quick Fix tasks
+  D.quickfix.forEach((r,i)=>{
+    const active=r.status!=='Completed'&&r.status!=='Rejected';
+    if(!active)return;
+    const diff=dayDiff(r.deadline);
+    if(diff!==null&&diff<0) notifs.overdue.push({label:r.task||'Quick Fix',sub:'Quick Fix'+(r.project?' · '+r.project:''),action:()=>go('quickfix'),type:'task',diff});
+    else if(diff===0) notifs.dueToday.push({label:r.task||'Quick Fix',sub:'Quick Fix'+(r.project?' · '+r.project:''),action:()=>go('quickfix'),type:'task'});
+    if((r.priority||'').toLowerCase()==='urgent') notifs.urgent.push({label:r.task||'Quick Fix',sub:'Quick Fix'+(r.project?' · '+r.project:''),action:()=>go('quickfix'),type:'task'});
+    if(r.status==='In Progress') notifs.inProgress.push({label:r.task||'Quick Fix',sub:'Quick Fix',action:()=>go('quickfix'),type:'task'});
+    (r.files||[]).forEach(f=>{
+      if(f.approval&&f.approval!=='Approved'&&f.approval!=='Rejected')
+        notifs.pendingApproval.push({label:f.name||'File',sub:'Quick Fix · '+(r.task||''),action:()=>go('quickfix'),type:'file'});
+    });
+  });
+
+  // Daily tasks
+  D.daily.forEach((r,i)=>{
+    if(r.done)return;
+    const active=r.status!=='Completed';
+    const diff=dayDiff(r.deadline);
+    if(diff!==null&&diff<0) notifs.overdue.push({label:r.task||'Daily Task',sub:'Daily Tasks',action:()=>go('daily'),type:'task',diff});
+    else if(diff===0) notifs.dueToday.push({label:r.task||'Daily Task',sub:'Daily Tasks',action:()=>go('daily'),type:'task'});
+    if((r.priority||'').toLowerCase()==='high'||(r.priority||'').toLowerCase()==='urgent') notifs.urgent.push({label:r.task||'Daily Task',sub:'Daily Tasks · '+(r.priority||'High'),action:()=>go('daily'),type:'task'});
+    if(r.status==='In Progress') notifs.inProgress.push({label:r.task||'Daily Task',sub:'Daily Tasks',action:()=>go('daily'),type:'task'});
+    (r.files||[]).forEach(f=>{
+      if(f.approval&&f.approval!=='Approved'&&f.approval!=='Rejected')
+        notifs.pendingApproval.push({label:f.name||'File',sub:'Daily · '+(r.task||''),action:()=>go('daily'),type:'file'});
+    });
+  });
+
+  return notifs;
+}
+
+function updateNotifBadge(){
+  const n=getNotifications();
+  const total=n.overdue.length+n.dueToday.length+n.urgent.length+n.pendingApproval.length;
+  const badge=document.getElementById('notifBadge');
+  const btn=document.getElementById('notifBtn');
+  if(badge){badge.textContent=total>99?'99+':total;badge.className=total>0?'':'hidden';}
+  if(btn)btn.style.display='flex';
+}
+
+let _niActions=[];
+function niGo(idx){_niActions[idx]&&_niActions[idx]();closeNotif();}
+
+function renderNotifBody(){
+  _niActions=[];
+  const n=getNotifications();
+  const total=n.overdue.length+n.dueToday.length+n.urgent.length+n.pendingApproval.length;
+  document.getElementById('ndTitle').textContent='Notifications'+(total?' ('+total+')':'');
+
+  function section(title,items,dotColor,tagColor,emptySkip){
+    if(!items.length&&emptySkip)return '';
+    let s='<div class="nd-section"><div class="nd-section-title" style="color:'+dotColor+'">'+title+' <span class="nd-count" style="background:'+tagColor+';color:'+dotColor+'">'+items.length+'</span></div>';
+    if(!items.length){s+='<div style="font-size:12px;color:var(--text-muted);padding:6px 0">None right now</div>';return s+'</div>';}
+    items.forEach((it)=>{
+      const idx=_niActions.length;_niActions.push(it.action);
+      const typeIcon=it.type==='file'?'📎':it.type==='task'?'✓':'▸';
+      s+='<div class="nd-item" onclick="niGo('+idx+')">';
+      s+='<div class="nd-dot" style="background:'+dotColor+'"></div>';
+      s+='<div class="nd-info"><div class="nd-name">'+E(it.label)+'</div><div class="nd-sub">'+E(it.sub)+'</div></div>';
+      s+='<span class="nd-tag" style="background:'+tagColor+';color:'+dotColor+'">'+typeIcon+'</span>';
+      s+='</div>';
+    });
+    return s+'</div>';
+  }
+
+  let html='';
+  if(!total&&!n.inProgress.length){
+    html='<div class="nd-empty"><div class="nd-check">✅</div>All caught up — nothing needs attention right now.</div>';
+  } else {
+    html+=section('🔴 Overdue',n.overdue,'#b85454','rgba(184,84,84,.1)',true);
+    html+=section('🟡 Due Today',n.dueToday,'#b8943e','rgba(184,148,62,.1)',true);
+    html+=section('⚡ Urgent Priority',n.urgent,'#b87a42','rgba(184,122,66,.1)',true);
+    html+=section('📋 Pending Approval',n.pendingApproval,'#7b6cb0','rgba(123,108,176,.1)',true);
+    html+=section('🔵 In Progress',n.inProgress,'#5b7fb5','rgba(91,127,181,.1)',true);
+  }
+
+  document.getElementById('ndBody').innerHTML=html;
+}
+
+function toggleNotif(){
+  const drawer=document.getElementById('notifDrawer');
+  const overlay=document.getElementById('notifOverlay');
+  if(drawer.classList.contains('open')){closeNotif();}
+  else{
+    renderNotifBody();
+    drawer.classList.add('open');
+    overlay.classList.add('show');
+  }
+}
+function closeNotif(){
+  document.getElementById('notifDrawer').classList.remove('open');
+  document.getElementById('notifOverlay').classList.remove('show');
+}
 
 // Auto-login if session exists
 (function(){
